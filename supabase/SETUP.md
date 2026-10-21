@@ -1,23 +1,31 @@
 # PrimeHub Supabase setup
 
 ## Status
-The GitHub Pages build is separate from the backend. The SQL and Edge Function in this folder are source files only until a project owner applies/deploys them in Supabase. DANA payment is not integrated; orders remain pending for manual verification.
+The GitHub Pages deployment can build independently of the Supabase backend. The SQL and Edge Function in this repository do not become active until applied/deployed to the Supabase project. DANA payment is not integrated; orders remain pending for manual verification.
 
-## New project setup
-1. Create a new Supabase project in the Supabase Dashboard.
-2. Open SQL Editor and run `schema.sql`.
-3. Run `migrations/20261022_api_permissions.sql` to ensure the API grants needed by RLS-protected tables are present (especially if you ran an earlier version of `schema.sql`).
+## Database and Auth setup
+1. In the Supabase SQL Editor, run `schema.sql` for a new project. If the schema was already applied, run the migrations below rather than running the whole schema again.
+2. Run `migrations/20261022_profile_bootstrap.sql`. This creates profiles for existing Auth users and automatically creates a non-admin profile for new Auth users.
+3. Run `migrations/20261022_api_permissions.sql` to ensure the API grants needed by RLS-protected tables are present.
 4. Run `migrations/20261022_create_order_function.sql`.
-5. Run `migrations/20261022_release_stock_on_cancellation.sql` to return stock for unpaid orders that admins cancel.
-6. Deploy the Edge Function `create-order` using Supabase CLI from the repository root:
+5. Run `migrations/20261022_release_stock_on_cancellation.sql`.
+6. Create or confirm the admin user's account in Supabase Auth. Then, as project owner in the SQL Editor, grant admin role for that exact email (replace the placeholder below with the admin email):
+   ```sql
+   insert into public.profiles (id, display_name, is_admin)
+   select id, email, true
+   from auth.users
+   where lower(email) = lower('ADMIN_EMAIL_HERE')
+   on conflict (id) do update set is_admin = true;
+   ```
+   This must be performed only by the project owner. Never expose admin-role changes through public signup or browser forms.
+7. Deploy the Edge Function `create-order` using Supabase CLI from the repository root:
    `npx supabase functions deploy create-order --project-ref YOUR_PROJECT_REF`
-6. In Edge Function secrets, confirm the platform supplies `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY`. Never place the service-role key in browser code, GitHub, or a public environment variable.
-7. Configure these GitHub Actions repository variables or secrets for the static build: `NEXT_PUBLIC_SUPABASE_URL` and either `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` or `NEXT_PUBLIC_SUPABASE_ANON_KEY`. These are public browser credentials and will be embedded in site JavaScript; the service-role key must never use a `NEXT_PUBLIC_*` name.
-8. Add real, accurate products from the Supabase Table Editor with price and available stock. When public configuration is present, the storefront reads active products from Supabase and the order form calls the `create-order` function.
-9. Configure an admin account only after Auth is set up; assign `profiles.is_admin=true` through the SQL Editor as project owner. Do not expose this field in signup or public UI.
+8. In Edge Function secrets, confirm the platform supplies `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY`. Never place the service-role key in browser code, GitHub, or a public environment variable.
+9. Configure these GitHub Actions repository variables or secrets for the static build: `NEXT_PUBLIC_SUPABASE_URL` and either `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` or `NEXT_PUBLIC_SUPABASE_ANON_KEY`. These public browser credentials are embedded in the deployed site; the service-role key must never use a `NEXT_PUBLIC_*` name.
+10. Add real, accurate products to the Supabase `products` table with current prices and available stock. With public configuration present, the storefront reads active products and the order form calls `create-order`.
 
 ## Order function
-`create-order` accepts `customer_name`, `customer_contact`, optional `customer_note`, and `items: [{ product_id, quantity }]`. Prices are read from the database, not accepted from the browser. Product rows are locked and stock decremented in a database transaction; an order code is returned with payment status `pending`.
+`create-order` accepts `customer_name`, `customer_contact`, optional `customer_note`, and `items: [{ product_id, quantity }]`. Prices are read from the database rather than accepted from the browser. Product rows are locked and stock is decremented in a database transaction; the order code is returned with payment status `pending`.
 
-## Important
-The cancellation migration releases stock only when an unpaid/failed order is cancelled; cancelled orders cannot be reopened. Paid-order refunds and inventory decisions still require manual review. The public `create-order` function is configured with `verify_jwt = false` because customers do not sign in; input validation is implemented, but rate limiting/CAPTCHA and privacy/retention controls are required before public launch. Test RLS grants and policies in Supabase before production. Keep all secrets out of commits.
+## Launch safeguards
+The cancellation migration returns stock only when an unpaid/failed order is cancelled; cancelled orders cannot be reopened. Paid-order refunds and inventory decisions require manual review. The public `create-order` function has `verify_jwt = false` because customers do not sign in. Rate limiting/CAPTCHA, privacy/retention controls, RLS verification and end-to-end checkout tests are still required before public launch. Keep all secrets out of commits.
