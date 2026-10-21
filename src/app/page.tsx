@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   ArrowDownRight,
   ArrowRight,
@@ -21,13 +21,16 @@ import {
 type Service = {
   id: string;
   name: string;
-  category: "Produktivitas" | "Hiburan" | "Kreativitas" | "AI";
+  category: string;
   description: string;
   price: string;
   duration: string;
   icon: string;
   tone: string;
   featured?: boolean;
+  productId?: string;
+  price_idr?: number;
+  stock?: number;
 };
 
 const services: Service[] = [
@@ -39,10 +42,13 @@ const services: Service[] = [
   { id: "learning", name: "Learning Plus", category: "Produktivitas", description: "Dukung perjalanan belajar dan pengembangan diri.", price: "Hubungi kami", duration: "Paket tersedia", icon: "✦", tone: "yellow" }
 ];
 
-const categories = ["Semua layanan", "AI", "Kreativitas", "Hiburan", "Produktivitas"] as const;
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL?.replace(/\/$/, "");
+const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+const money = (value: number) => new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", maximumFractionDigits: 0 }).format(value);
 
 export default function HomePage() {
-  const [activeCategory, setActiveCategory] = useState<(typeof categories)[number]>("Semua layanan");
+  const [activeCategory, setActiveCategory] = useState("Semua layanan");
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedService, setSelectedService] = useState<Service | null>(null);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -50,31 +56,149 @@ export default function HomePage() {
   const [customerContact, setCustomerContact] = useState("");
   const [customerNote, setCustomerNote] = useState("");
   const [submitted, setSubmitted] = useState(false);
+  const [requestSummary, setRequestSummary] = useState("");
+  const [requestError, setRequestError] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+  const [createdOrder, setCreatedOrder] = useState<{ order_code: string; total_idr: number } | null>(null);
+  const [catalogServices, setCatalogServices] = useState<Service[]>(services);
+  const [catalogStatus, setCatalogStatus] = useState<"demo" | "loading" | "live" | "error">(
+    supabaseUrl && supabaseKey ? "loading" : "demo"
+  );
 
-  const filteredServices = useMemo(() => services.filter((service) => {
+  useEffect(() => {
+    if (!supabaseUrl || !supabaseKey) return;
+    let cancelled = false;
+
+    async function loadCatalog() {
+      try {
+        const response = await fetch(
+          `${supabaseUrl}/rest/v1/products?select=id,name,description,category,price_idr,stock,is_active&is_active=eq.true&order=created_at.desc`,
+          { headers: { apikey: supabaseKey, Authorization: `Bearer ${supabaseKey}` } }
+        );
+        if (!response.ok) throw new Error("Katalog tidak dapat dimuat.");
+        const rows = await response.json() as Array<{
+          id: string; name: string; description: string | null; category: string | null;
+          price_idr: number | string; stock: number; is_active: boolean;
+        }>;
+        if (!Array.isArray(rows)) throw new Error("Format katalog tidak valid.");
+
+        const mapped: Service[] = rows.map((product, index) => {
+          const category = product.category?.trim() || "Lainnya";
+          const categoryLower = category.toLowerCase();
+          const style = categoryLower.includes("ai") ? { icon: "✳", tone: "mint" }
+            : categoryLower.includes("hiburan") || categoryLower.includes("musik") || categoryLower.includes("video") ? { icon: "♫", tone: "green" }
+            : categoryLower.includes("kreat") || categoryLower.includes("desain") ? { icon: "✿", tone: "pink" }
+            : categoryLower.includes("cloud") || categoryLower.includes("storage") ? { icon: "☁", tone: "blue" }
+            : { icon: "✦", tone: "yellow" };
+          const price = Number(product.price_idr);
+          return {
+            id: product.id,
+            productId: product.id,
+            name: product.name,
+            category,
+            description: product.description || "Layanan digital PrimeHub.",
+            price_idr: price,
+            stock: product.stock,
+            price: money(price),
+            duration: product.stock > 0 ? `${product.stock} tersedia` : "Stok habis",
+            icon: style.icon,
+            tone: style.tone,
+            featured: index === 0
+          };
+        });
+        if (!cancelled) {
+          setCatalogServices(mapped);
+          setCatalogStatus("live");
+        }
+      } catch {
+        if (!cancelled) {
+          setCatalogServices([]);
+          setCatalogStatus("error");
+        }
+      }
+    }
+
+    void loadCatalog();
+    return () => { cancelled = true; };
+  }, []);
+
+  const categoryOptions = useMemo(
+    () => ["Semua layanan", ...Array.from(new Set(catalogServices.map((service) => service.category).filter(Boolean)))],
+    [catalogServices]
+  );
+
+  const filteredServices = useMemo(() => catalogServices.filter((service) => {
     const categoryMatch = activeCategory === "Semua layanan" || service.category === activeCategory;
     const query = searchTerm.toLowerCase().trim();
     const searchMatch = !query || service.name.toLowerCase().includes(query) || service.description.toLowerCase().includes(query) || service.category.toLowerCase().includes(query);
     return categoryMatch && searchMatch;
-  }), [activeCategory, searchTerm]);
+  }), [activeCategory, catalogServices, searchTerm]);
 
   function openOrder(service: Service) {
     setSelectedService(service);
     setSubmitted(false);
+    setRequestSummary("");
+    setRequestError("");
+    setCreatedOrder(null);
   }
 
-  function submitInquiry(event: React.FormEvent<HTMLFormElement>) {
+  async function submitInquiry(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (!selectedService) return;
-    const message = [
-      "Halo PrimeHub, saya ingin bertanya tentang layanan.",
-      "Layanan: " + selectedService.name,
-      "Nama: " + customerName,
-      "Kontak: " + customerContact,
-      customerNote ? "Catatan: " + customerNote : ""
-    ].filter(Boolean).join("\n");
-    setCustomerNote(message);
-    setSubmitted(true);
+    setSubmitting(true);
+    setRequestError("");
+    try {
+      if (selectedService.productId && supabaseUrl && supabaseKey) {
+        const response = await fetch(`${supabaseUrl}/functions/v1/create-order`, {
+          method: "POST",
+          headers: {
+            apikey: supabaseKey,
+            Authorization: `Bearer ${supabaseKey}`,
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            customer_name: customerName,
+            customer_contact: customerContact,
+            customer_note: customerNote,
+            items: [{ product_id: selectedService.productId, quantity: 1 }]
+          })
+        });
+        const result = await response.json().catch(() => ({}));
+        if (!response.ok) throw new Error(result.error || "Pesanan belum dapat dibuat. Coba lagi nanti.");
+        const order = result.order;
+        if (!order?.order_code || typeof order.total_idr !== "number") {
+          throw new Error("Respons pesanan tidak lengkap. Jangan ulangi pembayaran; hubungi admin untuk memeriksa kode pesanan.");
+        }
+        const summary = [
+          "PrimeHub — ringkasan pesanan",
+          "Layanan: " + selectedService.name,
+          "Kode pesanan: " + order.order_code,
+          "Total: " + money(order.total_idr),
+          "Status pembayaran: Menunggu verifikasi",
+          "Nama: " + customerName,
+          "Kontak: " + customerContact,
+          customerNote ? "Catatan: " + customerNote : ""
+        ].filter(Boolean).join("\n");
+        setCreatedOrder({ order_code: order.order_code, total_idr: order.total_idr });
+        setRequestSummary(summary);
+        setSubmitted(true);
+        return;
+      }
+
+      const message = [
+        "Halo PrimeHub, saya ingin bertanya tentang layanan.",
+        "Layanan: " + selectedService.name,
+        "Nama: " + customerName,
+        "Kontak: " + customerContact,
+        customerNote ? "Catatan: " + customerNote : ""
+      ].filter(Boolean).join("\n");
+      setRequestSummary(message);
+      setSubmitted(true);
+    } catch (error) {
+      setRequestError(error instanceof Error ? error.message : "Permintaan gagal diproses.");
+    } finally {
+      setSubmitting(false);
+    }
   }
 
   return (
@@ -139,7 +263,7 @@ export default function HomePage() {
         </div>
         <div className="catalog-tools">
           <div className="category-tabs" role="group" aria-label="Filter kategori">
-            {categories.map((category) => <button key={category} className={activeCategory === category ? "category-tab active" : "category-tab"} onClick={() => setActiveCategory(category)}>{category}</button>)}
+            {categoryOptions.map((category) => <button key={category} className={activeCategory === category ? "category-tab active" : "category-tab"} onClick={() => setActiveCategory(category)}>{category}</button>)}
           </div>
           <label className="search-box"><Search size={17} /><input value={searchTerm} onChange={(event) => setSearchTerm(event.target.value)} placeholder="Cari layanan..." aria-label="Cari layanan" />{searchTerm && <button onClick={() => setSearchTerm("")} aria-label="Hapus pencarian"><X size={15} /></button>}</label>
         </div>
@@ -149,11 +273,11 @@ export default function HomePage() {
             {service.featured && <span className="popular-label"><Sparkles size={12} /> PILIHAN POPULER</span>}
             <span className="service-category">{service.category}</span>
             <h3>{service.name}</h3><p>{service.description}</p>
-            <div className="service-card-bottom"><div><strong>{service.price}</strong><small>{service.duration}</small></div><button className="round-arrow" aria-label={"Tanya tentang " + service.name} onClick={() => openOrder(service)}><ArrowRight size={18} /></button></div>
+            <div className="service-card-bottom"><div><strong>{service.price}</strong><small>{service.duration}</small></div><button className="round-arrow" aria-label={"Tanya tentang " + service.name} disabled={Boolean(service.productId && (service.stock ?? 0) <= 0)} onClick={() => openOrder(service)}><ArrowRight size={18} /></button></div>
           </article>)}
-          {filteredServices.length === 0 && <div className="empty-state"><Search size={26} /><h3>Layanan belum ditemukan</h3><p>Coba kata kunci atau kategori lainnya.</p><button className="button button-secondary" onClick={() => { setSearchTerm(""); setActiveCategory("Semua layanan"); }}>Reset pencarian</button></div>}
+          {filteredServices.length === 0 && <div className="empty-state"><Search size={26} /><h3>{catalogStatus === "loading" ? "Memuat katalog..." : catalogStatus === "error" ? "Katalog belum bisa dimuat" : catalogStatus === "live" ? "Belum ada produk tersedia" : "Layanan belum ditemukan"}</h3><p>{catalogStatus === "error" ? "Koneksi katalog sedang bermasalah. Coba lagi nanti." : catalogStatus === "loading" ? "Mengambil produk PrimeHub terbaru." : "Coba kata kunci atau kategori lainnya."}</p>{catalogStatus !== "loading" && catalogStatus !== "error" && <button className="button button-secondary" onClick={() => { setSearchTerm(""); setActiveCategory("Semua layanan"); }}>Reset pencarian</button>}</div>}
         </div>
-        <p className="catalog-note"><CircleHelp size={15} /> Ketersediaan, harga, dan ketentuan tiap layanan akan dikonfirmasi sebelum pemesanan.</p>
+        <p className="catalog-note"><CircleHelp size={15} /> {catalogStatus === "live" ? "Harga dan stok diambil langsung dari katalog PrimeHub." : "Katalog saat ini menggunakan contoh tampilan; pesanan belum dikirim ke backend."}</p>
       </section>
 
       <section className="closing-cta">
@@ -176,17 +300,18 @@ export default function HomePage() {
             <div className={"service-icon modal-service-icon " + selectedService.tone}>{selectedService.icon}</div>
             <div className="eyebrow"><span className="eyebrow-dot" /> REQUEST INFORMATION</div>
             <h2 id="order-title">Tertarik dengan {selectedService.name}?</h2>
-            <p>Isi detail berikut. Ini menyiapkan ringkasan permintaan saja; belum ada pembayaran atau pesanan yang dikirim.</p>
+            <p>{selectedService.productId ? "Isi kontak untuk membuat pesanan. Pembayaran tetap berstatus menunggu sampai diverifikasi admin." : "Isi detail berikut untuk menyiapkan ringkasan permintaan. Ringkasan contoh belum dikirim ke backend."}</p>
             <form onSubmit={submitInquiry} className="inquiry-form">
               <label>Nama<input required value={customerName} onChange={(event) => setCustomerName(event.target.value)} placeholder="Nama kamu" /></label>
               <label>Kontak yang bisa dihubungi<input required value={customerContact} onChange={(event) => setCustomerContact(event.target.value)} placeholder="Email atau nomor WhatsApp" /></label>
               <label>Catatan (opsional)<textarea value={customerNote} onChange={(event) => setCustomerNote(event.target.value)} placeholder="Paket atau pertanyaan yang ingin dikonfirmasi" rows={3} /></label>
-              <button type="submit" className="button button-primary form-submit">Buat ringkasan permintaan <ArrowRight size={17} /></button>
+              {requestError && <p role="alert" style={{ color: "#c2374b", lineHeight: 1.6 }}>{requestError}</p>}<button type="submit" className="button button-primary form-submit" disabled={submitting}>{submitting ? "Memproses..." : selectedService.productId ? "Buat pesanan" : "Buat ringkasan permintaan"} <ArrowRight size={17} /></button>
             </form>
           </> : <div className="request-summary">
-            <span className="success-mark"><Check size={28} /></span><div className="eyebrow">REQUEST SUMMARY</div><h2 id="order-title">Ringkasan siap disalin</h2><p>Permintaan belum dikirim. Salin ringkasan ini lalu hubungi kanal resmi PrimeHub setelah kontak layanan ditambahkan.</p>
-            <textarea readOnly value={customerNote} rows={7} aria-label="Ringkasan permintaan" />
-            <button className="button button-primary form-submit" onClick={() => navigator.clipboard?.writeText(customerNote)}>Salin ringkasan <Check size={17} /></button>
+            <span className="success-mark"><Check size={28} /></span><div className="eyebrow">REQUEST SUMMARY</div><h2 id="order-title">Ringkasan siap disalin</h2><p>{createdOrder ? "Pesanan tercatat dengan status menunggu verifikasi. Simpan kode ini; jangan menganggap pesanan lunas sebelum pembayaran diverifikasi." : "Ini hanya ringkasan permintaan lokal dan belum dikirim ke backend."}</p>
+            {createdOrder && <p><strong>Kode pesanan: {createdOrder.order_code}</strong><br />Total: {money(createdOrder.total_idr)}<br />Pembayaran: Menunggu verifikasi admin</p>}
+            <textarea readOnly value={requestSummary} rows={7} aria-label="Ringkasan permintaan" />
+            <button className="button button-primary form-submit" onClick={() => navigator.clipboard?.writeText(requestSummary)}>Salin ringkasan <Check size={17} /></button>
             <button className="button button-secondary form-submit" onClick={() => setSelectedService(null)}>Selesai</button>
           </div>}
         </section>
