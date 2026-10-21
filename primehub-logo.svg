@@ -1,6 +1,0 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="1400" height="420" viewBox="0 0 1400 420">
-<defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#2E70FF"/><stop offset="1" stop-color="#914BFF"/></linearGradient></defs>
-<g transform="translate(35 40)"><path fill="url(#g)" fill-rule="evenodd" d="M0 345V86h132q51 0 88 36t19 67q-19 32-56 44-23 8-51 8H74v104zm74-138h59q29 0 46-17t-5-38q-17-18-45-18H74z"/></g>
-<text x="410" y="205" font-family="Inter,Arial,sans-serif" font-size="116" font-weight="750" fill="#0B1024">PrimeHub</text>
-<text x="418" y="285" font-family="Inter,Arial,sans-serif" font-size="32" fill="#59627A" letter-spacing=".3">Premium Services. Better Life.</text>
-</svg>
