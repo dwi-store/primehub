@@ -280,7 +280,7 @@ export default function HomePage() {
           </article>)}
           {filteredServices.length === 0 && <div className="empty-state"><Search size={26} /><h3>{catalogStatus === "loading" ? "Memuat katalog..." : catalogStatus === "error" ? "Katalog belum bisa dimuat" : catalogStatus === "live" ? "Belum ada produk tersedia" : "Layanan belum ditemukan"}</h3><p>{catalogStatus === "error" ? "Koneksi katalog sedang bermasalah. Coba lagi nanti." : catalogStatus === "loading" ? "Mengambil produk PrimeHub terbaru." : "Coba kata kunci atau kategori lainnya."}</p>{catalogStatus !== "loading" && catalogStatus !== "error" && <button className="button button-secondary" onClick={() => { setSearchTerm(""); setActiveCategory("Semua layanan"); }}>Reset pencarian</button>}</div>}
         </div>
-        <p className="catalog-note"><CircleHelp size={15} /> {catalogStatus === "live" ? "Harga dan stok diambil langsung dari katalog PrimeHub." : "Katalog saat ini menggunakan contoh tampilan; pesanan belum dikirim ke backend."}</p>
+        <p className="catalog-note"><CircleHelp size={15} /> {catalogStatus === "live" ? "Harga dan stok diambil langsung dari katalog PrimeHub." : catalogStatus === "loading" ? "Sedang memuat katalog dari backend." : catalogStatus === "error" ? "Katalog tidak tersedia karena koneksi backend bermasalah." : "Katalog menggunakan data contoh; pesanan belum dikirim ke backend."}</p>
       </section>
 
       <section className="closing-cta">
