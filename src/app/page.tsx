@@ -82,7 +82,7 @@ export default function HomePage() {
       <div className="announcement"><Sparkles size={14} /> Pilihan layanan digital untuk hari yang lebih produktif <ArrowRight size={14} /></div>
       <header className="site-header">
         <a className="brand" href="#" aria-label="PrimeHub beranda">
-          <Image src="/primehub-logo.svg" alt="PrimeHub" width={168} height={48} priority />
+          <Image src="/primehub/primehub-logo.svg" alt="PrimeHub" width={168} height={48} priority />
         </a>
         <nav className={mobileMenuOpen ? "nav-links nav-open" : "nav-links"} aria-label="Navigasi utama">
           <a href="#layanan" onClick={() => setMobileMenuOpen(false)}>Jelajahi layanan</a>
@@ -165,7 +165,7 @@ export default function HomePage() {
       </section>
 
       <footer className="site-footer" id="bantuan">
-        <div className="footer-top"><a className="brand footer-brand" href="#"><Image src="/primehub-logo-dark.png" alt="PrimeHub" width={168} height={48} /></a><p>Premium Services. Better Life.</p><a href="#layanan" className="footer-link">Jelajahi katalog <ArrowRight size={15} /></a></div>
+        <div className="footer-top"><a className="brand footer-brand" href="#"><Image src="/primehub/primehub-logo-dark.png" alt="PrimeHub" width={168} height={48} /></a><p>Premium Services. Better Life.</p><a href="#layanan" className="footer-link">Jelajahi katalog <ArrowRight size={15} /></a></div>
         <div className="footer-bottom"><span>© {new Date().getFullYear()} PrimeHub. All rights reserved.</span><span>Layanan harus digunakan sesuai ketentuan resmi penyedia masing-masing.</span></div>
       </footer>
 
