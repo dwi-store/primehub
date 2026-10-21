@@ -1,0 +1,5 @@
+# Public checkout endpoint: customer orders are created without requiring account login.
+# The function validates input itself and uses a server-side service-role key.
+# Add a CAPTCHA/rate limiter before accepting public traffic at scale.
+[functions.create-order]
+verify_jwt = false
