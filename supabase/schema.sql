@@ -12,6 +12,47 @@ create table if not exists public.profiles (
   created_at timestamptz not null default now()
 );
 
+-- Create a normal (non-admin) profile for every new Auth user.
+create or replace function public.handle_primehub_new_auth_user()
+returns trigger
+language plpgsql
+security definer
+set search_path = ''
+as $$
+begin
+  insert into public.profiles (id, display_name)
+  values (
+    new.id,
+    coalesce(
+      nullif(new.raw_user_meta_data ->> 'display_name', ''),
+      nullif(new.raw_user_meta_data ->> 'full_name', '')
+    )
+  )
+  on conflict (id) do nothing;
+  return new;
+end;
+$$;
+
+revoke all on function public.handle_primehub_new_auth_user()
+  from public, anon, authenticated;
+
+drop trigger if exists on_primehub_auth_user_created on auth.users;
+create trigger on_primehub_auth_user_created
+  after insert on auth.users
+  for each row
+  execute function public.handle_primehub_new_auth_user();
+
+-- Backfill any Auth accounts that existed before the schema was applied.
+insert into public.profiles (id, display_name)
+select
+  u.id,
+  coalesce(
+    nullif(u.raw_user_meta_data ->> 'display_name', ''),
+    nullif(u.raw_user_meta_data ->> 'full_name', '')
+  )
+from auth.users u
+on conflict (id) do nothing;
+
 create table if not exists public.products (
   id uuid primary key default gen_random_uuid(),
   slug text not null unique,
@@ -130,8 +171,7 @@ create policy "Customers can read own order items"
   );
 
 -- Intentionally no browser INSERT policies for orders/order_items and no direct stock-update policy.
--- Implement atomic order creation, authoritative price checks, stock reservation, order codes,
--- and manual payment verification in a trusted Supabase Edge Function before accepting orders.
+-- Order creation is handled by a trusted Edge Function and a transaction-safe database function.
 
 -- Explicit API grants complement RLS policies. RLS still determines which rows/actions are allowed.
 grant usage on schema public to anon, authenticated, service_role;
