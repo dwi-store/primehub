@@ -135,7 +135,7 @@ export default function AdminPage() {
     <div style={{ maxWidth: 1120, margin: "0 auto" }}>
       <header style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 16, flexWrap: "wrap", marginBottom: 28 }}>
         <div><p style={{ margin: 0, color: "#5c5de8", fontWeight: 800, letterSpacing: 2, fontSize: 12 }}>PRIMEHUB / ADMIN</p><h1 style={{ margin: "8px 0", fontSize: 32 }}>Panel pengelolaan</h1><p style={{ margin: 0, color: "#687087" }}>Katalog, stok, dan pesanan dalam satu tempat.</p></div>
-        <Link href="/primehub/" style={{ color: "#5c5de8", fontWeight: 700 }}>← Kembali ke toko</Link>
+        <Link href="/" style={{ color: "#5c5de8", fontWeight: 700 }}>← Kembali ke toko</Link>
       </header>
 
       {!token ? <form onSubmit={signIn} style={{ background: "white", padding: 24, borderRadius: 18, border: "1px solid #e8eaf1", maxWidth: 480 }}>
