@@ -1,6 +1,7 @@
 "use client";
 
-import { FormEvent, useState } from "react";
+import type { FormEvent } from "react";
+import { useState } from "react";
 import Link from "next/link";
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL?.replace(/\/$/, "");
@@ -68,11 +69,14 @@ export default function AdminPage() {
     setOrders(o);
   }
 
-  async function signIn(event: FormEvent) {
+  async function signIn(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    setBusy(true); setNotice("");
+    setBusy(true);
+    setNotice("");
     try {
-      if (!supabaseUrl || !supabaseKey) throw new Error("NEXT_PUBLIC_SUPABASE_URL dan NEXT_PUBLIC_SUPABASE_ANON_KEY belum dikonfigurasi.");
+      if (!supabaseUrl || !supabaseKey) {
+        throw new Error("NEXT_PUBLIC_SUPABASE_URL dan NEXT_PUBLIC_SUPABASE_ANON_KEY belum dikonfigurasi.");
+      }
       const response = await fetch(`${supabaseUrl}/auth/v1/token?grant_type=password`, {
         method: "POST",
         headers: { apikey: supabaseKey, "Content-Type": "application/json" },
@@ -80,14 +84,36 @@ export default function AdminPage() {
       });
       const data = await response.json();
       if (!response.ok) throw new Error(data.msg || data.message || "Login gagal.");
-      setToken(data.access_token);
-      setUserId(data.user?.id || "");
+      if (!data.access_token || !data.user?.id) throw new Error("Respons login tidak lengkap.");
+
+      // Check the server-controlled profile role before revealing the admin dashboard.
+      const roleResponse = await fetch(
+        `${supabaseUrl}/rest/v1/profiles?id=eq.${encodeURIComponent(data.user.id)}&select=is_admin`,
+        { headers: { apikey: supabaseKey, Authorization: `Bearer ${data.access_token}` } }
+      );
+      const roleData = await roleResponse.json();
+      if (!roleResponse.ok) {
+        throw new Error("Tidak dapat memverifikasi hak admin. Periksa kebijakan akses profiles di Supabase.");
+      }
+      if (!Array.isArray(roleData) || roleData[0]?.is_admin !== true) {
+        throw new Error("Login berhasil, tetapi akun ini belum memiliki hak admin PrimeHub.");
+      }
+
+      // Load protected data before setting the UI to an authenticated state.
       await loadData(data.access_token);
+      setToken(data.access_token);
+      setUserId(data.user.id);
       setPassword("");
-      setNotice("Login berhasil. Hak akses tetap ditentukan oleh kebijakan RLS database.");
+      setNotice("Login admin berhasil.");
     } catch (error) {
+      setToken("");
+      setUserId("");
+      setProducts([]);
+      setOrders([]);
       setNotice(error instanceof Error ? error.message : "Terjadi kesalahan.");
-    } finally { setBusy(false); }
+    } finally {
+      setBusy(false);
+    }
   }
 
   function startNew() {
