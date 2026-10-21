@@ -8,11 +8,11 @@ export const metadata: Metadata = {
   applicationName: "PrimeHub",
   icons: {
     icon: [
-      { url: "/favicon.svg", type: "image/svg+xml" },
-      { url: "/favicon.ico", sizes: "any" },
-      { url: "/favicon-32.png", sizes: "32x32", type: "image/png" }
+      { url: "/primehub/favicon.svg", type: "image/svg+xml" },
+      { url: "/primehub/favicon.ico", sizes: "any" },
+      { url: "/primehub/favicon-32.png", sizes: "32x32", type: "image/png" }
     ],
-    apple: [{ url: "/favicon-180.png", sizes: "180x180", type: "image/png" }]
+    apple: [{ url: "/primehub/favicon-180.png", sizes: "180x180", type: "image/png" }]
   }
 };
 
