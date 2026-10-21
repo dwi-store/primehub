@@ -132,3 +132,11 @@ create policy "Customers can read own order items"
 -- Intentionally no browser INSERT policies for orders/order_items and no direct stock-update policy.
 -- Implement atomic order creation, authoritative price checks, stock reservation, order codes,
 -- and manual payment verification in a trusted Supabase Edge Function before accepting orders.
+
+-- Explicit API grants complement RLS policies. RLS still determines which rows/actions are allowed.
+grant usage on schema public to anon, authenticated, service_role;
+grant select on public.products to anon, authenticated;
+grant insert, update, delete on public.products to authenticated;
+grant select on public.profiles to authenticated;
+grant select, update on public.orders to authenticated;
+grant select on public.order_items to authenticated;
