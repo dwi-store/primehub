@@ -5,7 +5,7 @@ import { useState } from "react";
 import Link from "next/link";
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL?.replace(/\/$/, "");
-const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
 type Product = {
   id: string;
@@ -75,7 +75,7 @@ export default function AdminPage() {
     setNotice("");
     try {
       if (!supabaseUrl || !supabaseKey) {
-        throw new Error("NEXT_PUBLIC_SUPABASE_URL dan NEXT_PUBLIC_SUPABASE_ANON_KEY belum dikonfigurasi.");
+        throw new Error("NEXT_PUBLIC_SUPABASE_URL dan NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY (atau NEXT_PUBLIC_SUPABASE_ANON_KEY) belum dikonfigurasi.");
       }
       const response = await fetch(`${supabaseUrl}/auth/v1/token?grant_type=password`, {
         method: "POST",
