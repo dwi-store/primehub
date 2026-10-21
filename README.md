@@ -44,4 +44,4 @@ npm start
 - Integrasikan pembayaran hanya setelah penyedia, harga, dan alur pemesanan sudah dikonfirmasi.
 - Pastikan setiap langganan diaktifkan sesuai ketentuan resmi penyedia layanan.
 
-Saat ini formulir hanya menghasilkan ringkasan permintaan di browser. Tidak ada pesanan atau pembayaran yang dikirim dan belum ada backend/database.
+Mode saat ini bergantung pada konfigurasi deployment. Tanpa konfigurasi Supabase publik, katalog menampilkan data contoh dan formulir hanya menghasilkan ringkasan lokal. Setelah `NEXT_PUBLIC_SUPABASE_URL` dan salah satu `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` / `NEXT_PUBLIC_SUPABASE_ANON_KEY` dikonfigurasi serta skema dan Edge Function Supabase diterapkan, katalog membaca produk aktif dan formulir dapat membuat pesanan berstatus menunggu verifikasi. Integrasi ini belum berarti pembayaran DANA otomatis tersedia; status lunas tidak boleh dipilih sebelum transfer diverifikasi. Lihat `supabase/SETUP.md`.
