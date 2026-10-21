@@ -60,7 +60,7 @@ export default function HomePage() {
   const [requestError, setRequestError] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [createdOrder, setCreatedOrder] = useState<{ order_code: string; total_idr: number } | null>(null);
-  const [catalogServices, setCatalogServices] = useState<Service[]>(services);
+  const [catalogServices, setCatalogServices] = useState<Service[]>(supabaseUrl && supabaseKey ? [] : services);
   const [catalogStatus, setCatalogStatus] = useState<"demo" | "loading" | "live" | "error">(
     supabaseUrl && supabaseKey ? "loading" : "demo"
   );
@@ -166,20 +166,21 @@ export default function HomePage() {
         const result = await response.json().catch(() => ({}));
         if (!response.ok) throw new Error(result.error || "Pesanan belum dapat dibuat. Coba lagi nanti.");
         const order = result.order;
-        if (!order?.order_code || typeof order.total_idr !== "number") {
+        const orderTotal = Number(order?.total_idr);
+        if (!order?.order_code || !Number.isFinite(orderTotal) || orderTotal < 0) {
           throw new Error("Respons pesanan tidak lengkap. Jangan ulangi pembayaran; hubungi admin untuk memeriksa kode pesanan.");
         }
         const summary = [
           "PrimeHub — ringkasan pesanan",
           "Layanan: " + selectedService.name,
           "Kode pesanan: " + order.order_code,
-          "Total: " + money(order.total_idr),
+          "Total: " + money(orderTotal),
           "Status pembayaran: Menunggu verifikasi",
           "Nama: " + customerName,
           "Kontak: " + customerContact,
           customerNote ? "Catatan: " + customerNote : ""
         ].filter(Boolean).join("\n");
-        setCreatedOrder({ order_code: order.order_code, total_idr: order.total_idr });
+        setCreatedOrder({ order_code: order.order_code, total_idr: orderTotal });
         setRequestSummary(summary);
         setSubmitted(true);
         return;
