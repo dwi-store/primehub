@@ -6,9 +6,10 @@ The GitHub Pages build is separate from the backend. The SQL and Edge Function i
 ## New project setup
 1. Create a new Supabase project in the Supabase Dashboard.
 2. Open SQL Editor and run `schema.sql`.
-3. Then run `migrations/20261022_create_order_function.sql`.
-4. Run `migrations/20261022_release_stock_on_cancellation.sql` to return stock for unpaid orders that admins cancel.
-5. Deploy the Edge Function `create-order` using Supabase CLI from the repository root:
+3. Run `migrations/20261022_api_permissions.sql` to ensure the API grants needed by RLS-protected tables are present (especially if you ran an earlier version of `schema.sql`).
+4. Run `migrations/20261022_create_order_function.sql`.
+5. Run `migrations/20261022_release_stock_on_cancellation.sql` to return stock for unpaid orders that admins cancel.
+6. Deploy the Edge Function `create-order` using Supabase CLI from the repository root:
    `npx supabase functions deploy create-order --project-ref YOUR_PROJECT_REF`
 6. In Edge Function secrets, confirm the platform supplies `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY`. Never place the service-role key in browser code, GitHub, or a public environment variable.
 7. Configure these GitHub Actions repository variables or secrets for the static build: `NEXT_PUBLIC_SUPABASE_URL` and either `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` or `NEXT_PUBLIC_SUPABASE_ANON_KEY`. These are public browser credentials and will be embedded in site JavaScript; the service-role key must never use a `NEXT_PUBLIC_*` name.
