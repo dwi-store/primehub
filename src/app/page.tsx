@@ -66,14 +66,16 @@ export default function HomePage() {
   );
 
   useEffect(() => {
-    if (!supabaseUrl || !supabaseKey) return;
+    const projectUrl = supabaseUrl;
+    const publicKey = supabaseKey;
+    if (!projectUrl || !publicKey) return;
     let cancelled = false;
 
     async function loadCatalog() {
       try {
         const response = await fetch(
-          `${supabaseUrl}/rest/v1/products?select=id,name,description,category,price_idr,stock,is_active&is_active=eq.true&order=created_at.desc`,
-          { headers: { apikey: supabaseKey, Authorization: `Bearer ${supabaseKey}` } }
+          `${projectUrl}/rest/v1/products?select=id,name,description,category,price_idr,stock,is_active&is_active=eq.true&order=created_at.desc`,
+          { headers: { apikey: publicKey, Authorization: `Bearer ${publicKey}` } }
         );
         if (!response.ok) throw new Error("Katalog tidak dapat dimuat.");
         const rows = await response.json() as Array<{
