@@ -67,7 +67,7 @@ export default function HomePage() {
 
   useEffect(() => {
     const projectUrl = supabaseUrl;
-    const publicKey = supabaseKey;
+    const publicKey = supabaseKey ?? "";
     if (!projectUrl || !publicKey) return;
     let cancelled = false;
 
