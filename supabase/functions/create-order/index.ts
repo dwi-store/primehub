@@ -55,13 +55,13 @@ function formatIdr(value: number): string {
 async function notifyAdminOnWhatsApp(order: WhatsAppOrderNotification): Promise<"sent" | "not_configured" | "failed"> {
   const accessToken = Deno.env.get("WHATSAPP_ACCESS_TOKEN")?.trim();
   const phoneNumberId = Deno.env.get("WHATSAPP_PHONE_NUMBER_ID")?.trim();
-  const recipient = Deno.env.get("WHATSAPP_ADMIN_RECIPIENT")?.replace(/\\D/g, "");
+  const recipient = Deno.env.get("WHATSAPP_ADMIN_RECIPIENT")?.replace(/\D/g, "");
   const templateName = Deno.env.get("WHATSAPP_ORDER_TEMPLATE")?.trim() || "primehub_order_alert";
   const languageCode = Deno.env.get("WHATSAPP_TEMPLATE_LANGUAGE")?.trim() || "id";
   const apiVersion = Deno.env.get("WHATSAPP_GRAPH_API_VERSION")?.trim() || "v26.0";
 
   if (!accessToken || !phoneNumberId || !recipient) return "not_configured";
-  if (!/^\\d{8,15}$/.test(recipient) || !/^v\\d+\\.0$/.test(apiVersion) || !/^[a-z0-9_]{1,512}$/i.test(templateName)) {
+  if (!/^\d{8,15}$/.test(recipient) || !/^v\d+\.0$/.test(apiVersion) || !/^[a-z0-9_]{1,512}$/i.test(templateName)) {
     console.error("WhatsApp order notification configuration is invalid.");
     return "failed";
   }
