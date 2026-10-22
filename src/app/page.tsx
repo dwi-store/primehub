@@ -123,7 +123,7 @@ export default function HomePage() {
   const [requestSummary, setRequestSummary] = useState("");
   const [requestError, setRequestError] = useState("");
   const [submitting, setSubmitting] = useState(false);
-  const [createdOrder, setCreatedOrder] = useState<{ order_code: string; total_idr: number } | null>(null);
+  const [createdOrder, setCreatedOrder] = useState<{ order_code: string; total_idr: number; checkout_url?: string; payment_notice?: string } | null>(null);
   const [catalogServices, setCatalogServices] = useState<Service[]>(supabase ? [] : fallbackCatalogServices);
   const [catalogStatus, setCatalogStatus] = useState<"unconfigured" | "loading" | "live" | "error">(supabase ? "loading" : "unconfigured");
 
@@ -245,17 +245,36 @@ export default function HomePage() {
         if (!order?.order_code || !Number.isFinite(orderTotal) || orderTotal < 0) {
           throw new Error("Respons pesanan tidak lengkap. Hubungi admin untuk memeriksa kode pesanan.");
         }
+        let checkoutUrl: string | undefined;
+        let paymentNotice = "Pembayaran otomatis belum tersedia. Simpan kode pesanan dan hubungi admin untuk instruksi pembayaran. Aktivasi tetap diproses manual setelah pembayaran terkonfirmasi.";
+        try {
+          const paymentResponse = await fetch(`${supabaseUrl}/functions/v1/create-midtrans-payment`, {
+            method: "POST",
+            headers: { apikey: supabaseKey, "Content-Type": "application/json" },
+            body: JSON.stringify({ order_code: order.order_code, customer_contact: customerContact })
+          });
+          const paymentResult = await paymentResponse.json().catch(() => ({}));
+          if (paymentResponse.ok && typeof paymentResult.payment?.redirect_url === "string") {
+            checkoutUrl = paymentResult.payment.redirect_url;
+            paymentNotice = "Tagihan berhasil dibuat. Selesaikan pembayaran melalui halaman resmi penyedia pembayaran. Setelah terkonfirmasi otomatis, admin tetap memproses aktivasi secara manual.";
+          } else if (typeof paymentResult.error === "string") {
+            paymentNotice = paymentResult.error;
+          }
+        } catch {
+          paymentNotice = "Pesanan sudah tercatat, tetapi tautan pembayaran belum berhasil dibuat. Simpan kode pesanan dan hubungi admin sebelum melakukan pembayaran.";
+        }
         const summary = [
           "UPPRIME — ringkasan pesanan",
           "Layanan: " + selectedService.name,
           "Kode pesanan: " + order.order_code,
           "Total: " + money(orderTotal),
-          "Status pembayaran: Menunggu verifikasi",
+          "Status pembayaran: Menunggu pembayaran/verifikasi",
+          checkoutUrl ? "Tautan pembayaran: " + checkoutUrl : "",
           "Nama: " + customerName,
           "Kontak: " + customerContact,
           customerNote ? "Catatan: " + customerNote : ""
         ].filter(Boolean).join("\n");
-        setCreatedOrder({ order_code: order.order_code, total_idr: orderTotal });
+        setCreatedOrder({ order_code: order.order_code, total_idr: orderTotal, checkout_url: checkoutUrl, payment_notice: paymentNotice });
         setRequestSummary(summary);
         setSubmitted(true);
         return;
@@ -404,8 +423,8 @@ export default function HomePage() {
             </form>
           </> : <div className="request-summary">
             <span className="success-mark"><CheckCircle2 size={28} /></span><span className="eyebrow">RINGKASAN</span><h2 id="order-title">{createdOrder ? "Pesanan tercatat" : "Ringkasan siap disalin"}</h2>
-            <p>{createdOrder ? "Simpan kode pesanan ini dan pantau email/WhatsApp yang kamu cantumkan. Status pembayaran saat ini masih menunggu verifikasi admin karena gateway otomatis belum diaktifkan. Jika belum ada pembaruan, hubungi admin dan sertakan kode pesanan. Setelah pembayaran terkonfirmasi, admin tetap memproses aktivasi secara manual." : "Ini ringkasan demo lokal. Tidak ada pembayaran atau aktivasi nyata."}</p>
-            {createdOrder && <p className="order-code"><strong>Kode pesanan: {createdOrder.order_code}</strong><br />Total: {money(createdOrder.total_idr)}<br />Pembayaran: Menunggu verifikasi admin</p>}
+            <p>{createdOrder ? createdOrder.payment_notice : "Ini ringkasan demo lokal. Tidak ada pembayaran atau aktivasi nyata."}</p>
+            {createdOrder && <><p className="order-code"><strong>Kode pesanan: {createdOrder.order_code}</strong><br />Total: {money(createdOrder.total_idr)}<br />Pembayaran: {createdOrder.checkout_url ? "Menunggu pembayaran" : "Menunggu instruksi admin"}</p>{createdOrder.checkout_url && <a className="button button-primary form-submit" href={createdOrder.checkout_url} target="_blank" rel="noreferrer">Bayar sekarang <ArrowRight size={17} /></a>}</> }
             <textarea readOnly value={requestSummary} rows={7} aria-label="Ringkasan permintaan" />
             <button className="button button-primary form-submit" type="button" onClick={() => { void navigator.clipboard?.writeText(requestSummary); }}>Salin ringkasan <CheckCircle2 size={17} /></button>
             <button className="button button-secondary form-submit" type="button" onClick={() => setSelectedService(null)}>Selesai</button>
