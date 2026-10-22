@@ -38,6 +38,7 @@ export default function AdminPage() {
   const [userId, setUserId] = useState("");
   const [products, setProducts] = useState<Product[]>([]);
   const [orders, setOrders] = useState<Order[]>([]);
+  const [orderFilter, setOrderFilter] = useState<"all" | "active" | "cancelled">("all");
   const [notice, setNotice] = useState("");
   const [busy, setBusy] = useState(false);
   const [editing, setEditing] = useState<Product | null>(null);
@@ -293,6 +294,63 @@ export default function AdminPage() {
     } finally { setBusy(false); }
   }
 
+  async function cancelOrder(order: Order) {
+    if (order.order_status === "cancelled") {
+      setNotice(`Pesanan ${order.order_code} sudah dibatalkan.`);
+      return;
+    }
+    if (order.payment_status === "paid" || order.payment_status === "refunded" || order.order_status === "completed") {
+      setNotice("Pesanan yang sudah lunas, dikembalikan dananya, atau selesai perlu ditangani manual. Jangan membatalkannya lewat tombol ini.");
+      return;
+    }
+
+    const confirmed = window.confirm(
+      `Batalkan pesanan ${order.order_code} milik ${order.customer_name}? Jika pembayaran masih menunggu atau gagal, stok yang dipesan akan dikembalikan otomatis.`
+    );
+    if (!confirmed) return;
+
+    setBusy(true);
+    setNotice("");
+    try {
+      await api(`orders?id=eq.${encodeURIComponent(order.id)}`, {
+        method: "PATCH",
+        body: JSON.stringify({ order_status: "cancelled", updated_at: new Date().toISOString() })
+      });
+      await loadData();
+      setNotice(`Pesanan ${order.order_code} dibatalkan. Stok akan dikembalikan otomatis jika pesanan belum dibayar atau pembayarannya gagal.`);
+    } catch (error) {
+      setNotice(error instanceof Error ? error.message : "Gagal membatalkan pesanan.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function deleteOrder(order: Order) {
+    if (order.order_status !== "cancelled" || !["pending", "failed"].includes(order.payment_status)) {
+      setNotice("Hanya pesanan yang sudah dibatalkan dan belum dibayar atau berstatus pembayaran gagal yang dapat dihapus permanen. Pesanan lunas/refund disimpan sebagai catatan.");
+      return;
+    }
+
+    const confirmed = window.confirm(
+      `HAPUS PERMANEN pesanan ${order.order_code}? Data pesanan dan rincian itemnya akan dihapus dan tidak dapat dipulihkan. Stok tidak akan diubah lagi.`
+    );
+    if (!confirmed) return;
+
+    setBusy(true);
+    setNotice("");
+    try {
+      await api(`orders?id=eq.${encodeURIComponent(order.id)}&order_status=eq.cancelled&payment_status=in.(pending,failed)`, {
+        method: "DELETE"
+      });
+      await loadData();
+      setNotice(`Pesanan ${order.order_code} berhasil dihapus permanen.`);
+    } catch (error) {
+      setNotice(error instanceof Error ? error.message : "Gagal menghapus pesanan. Pastikan pesanan sudah dibatalkan dan belum dibayar.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
   async function enableOrderNotifications() {
     if (typeof window === "undefined" || !("Notification" in window)) {
       setNotificationPermission("unsupported");
@@ -325,6 +383,7 @@ export default function AdminPage() {
 
   const money = (value: number) => new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", maximumFractionDigits: 0 }).format(value);
   const formatMoney = money;
+  const visibleOrders = orders.filter(order => orderFilter === "all" || (orderFilter === "cancelled" ? order.order_status === "cancelled" : order.order_status !== "cancelled"));
 
   return <main style={{ minHeight: "100vh", background: "#f6f7fb", color: "#10162a", padding: "28px 16px 60px" }}>
     <div style={{ maxWidth: 1120, margin: "0 auto" }}>
@@ -373,8 +432,16 @@ export default function AdminPage() {
           <div style={{ overflowX: "auto", marginTop: 20 }}><table style={tableStyle}><thead><tr><th style={thStyle}>Foto</th><th style={thStyle}>Produk</th><th style={thStyle}>Harga</th><th style={thStyle}>Stok (− / +)</th><th style={thStyle}>Status</th><th style={thStyle}>Aksi</th></tr></thead><tbody>{products.map(p => <tr key={p.id}><td style={tdStyle}>{p.image_url ? <img src={p.image_url} alt={p.name} style={{ width: 64, height: 56, objectFit: "cover", borderRadius: 8 }} /> : <span style={{ color: "#8b91a3" }}>Belum ada</span>}</td><td style={tdStyle}><strong>{p.name}</strong><br /><small>{p.slug}</small></td><td style={tdStyle}>{money(p.price_idr)}</td><td style={tdStyle}><div style={{ display: "flex", alignItems: "center", gap: 7, minWidth: 150 }}><button type="button" aria-label={`Kurangi stok ${p.name}`} disabled={busy || p.stock <= 0} onClick={() => adjustStock(p, -1)} style={{ ...secondaryButtonStyle, padding: "6px 11px", minWidth: 34 }}>−</button><strong style={{ minWidth: 24, textAlign: "center" }}>{p.stock}</strong><button type="button" aria-label={`Tambah stok ${p.name}`} disabled={busy} onClick={() => adjustStock(p, 1)} style={{ ...secondaryButtonStyle, padding: "6px 11px", minWidth: 34 }}>+</button><button type="button" disabled={busy} onClick={() => startEdit(p)} style={{ ...secondaryButtonStyle, padding: "6px 9px" }}>Atur</button></div></td><td style={tdStyle}>{p.is_active ? "Aktif" : "Nonaktif"}</td><td style={tdStyle}><div style={{ display: "flex", alignItems: "center", gap: 7, flexWrap: "wrap" }}><button type="button" disabled={busy} onClick={() => startEdit(p)} style={secondaryButtonStyle}>Edit produk</button><button type="button" disabled={busy} onClick={() => deleteProduct(p)} style={dangerButtonStyle}>Hapus</button></div></td></tr>)}</tbody></table>{products.length === 0 && <p style={{ color: "#687087" }}>Belum ada produk atau akun ini belum memiliki izin membaca katalog.</p>}</div>
         </section>
         <section style={panelStyle}>
-          <h2 style={{ marginTop: 0 }}>Pesanan terbaru</h2>
-          <div style={{ overflowX: "auto" }}><table style={tableStyle}><thead><tr><th style={thStyle}>Kode / tanggal</th><th style={thStyle}>Pelanggan</th><th style={thStyle}>Total</th><th style={thStyle}>Pembayaran</th><th style={thStyle}>Pesanan</th></tr></thead><tbody>{orders.map(o => <tr key={o.id}><td style={tdStyle}><strong>{o.order_code}</strong><br /><small>{new Date(o.created_at).toLocaleString("id-ID")}</small></td><td style={tdStyle}>{o.customer_name}<br /><small>{o.customer_contact}</small></td><td style={tdStyle}>{money(o.total_idr)}</td><td style={tdStyle}><select value={o.payment_status} onChange={e => updateOrder(o, "payment_status", e.target.value)} style={selectStyle}><option value="pending">Menunggu</option><option value="paid">Terverifikasi lunas</option><option value="failed">Gagal</option><option value="refunded">Dikembalikan</option></select></td><td style={tdStyle}><select value={o.order_status} onChange={e => updateOrder(o, "order_status", e.target.value)} style={selectStyle}><option value="pending_payment">Menunggu pembayaran</option><option value="processing">Diproses</option><option value="completed">Selesai</option><option value="cancelled">Dibatalkan</option></select></td></tr>)}</tbody></table>{orders.length === 0 && <p style={{ color: "#687087" }}>Belum ada pesanan.</p>}</div>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12, flexWrap: "wrap", marginBottom: 14 }}>
+            <div><h2 style={{ margin: 0 }}>Kelola pesanan</h2><small style={{ color: "#687087" }}>{visibleOrders.length} dari {orders.length} pesanan · Maksimal 50 terbaru</small></div>
+            <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }} aria-label="Filter pesanan">
+              <button type="button" onClick={() => setOrderFilter("all")} style={orderFilter === "all" ? filterButtonActiveStyle : secondaryButtonStyle}>Semua</button>
+              <button type="button" onClick={() => setOrderFilter("active")} style={orderFilter === "active" ? filterButtonActiveStyle : secondaryButtonStyle}>Aktif</button>
+              <button type="button" onClick={() => setOrderFilter("cancelled")} style={orderFilter === "cancelled" ? filterButtonActiveStyle : secondaryButtonStyle}>Dibatalkan</button>
+            </div>
+          </div>
+          <p style={{ margin: "0 0 12px", color: "#687087", fontSize: 12, lineHeight: 1.6 }}>Batalkan pesanan yang belum lunas. Penghapusan permanen hanya tersedia untuk pesanan dibatalkan yang belum dibayar atau pembayarannya gagal; pesanan lunas dan refund tetap tersimpan sebagai riwayat.</p>
+          <div style={{ overflowX: "auto" }}><table style={tableStyle}><thead><tr><th style={thStyle}>Kode / tanggal</th><th style={thStyle}>Pelanggan</th><th style={thStyle}>Total</th><th style={thStyle}>Pembayaran</th><th style={thStyle}>Status pesanan</th><th style={thStyle}>Aksi</th></tr></thead><tbody>{visibleOrders.map(o => <tr key={o.id}><td style={tdStyle}><strong>{o.order_code}</strong><br /><small>{new Date(o.created_at).toLocaleString("id-ID")}</small></td><td style={tdStyle}>{o.customer_name}<br /><small>{o.customer_contact}</small></td><td style={tdStyle}>{money(o.total_idr)}</td><td style={tdStyle}><select value={o.payment_status} disabled={busy} onChange={e => updateOrder(o, "payment_status", e.target.value)} style={selectStyle}><option value="pending">Menunggu</option><option value="paid">Terverifikasi lunas</option><option value="failed">Gagal</option><option value="refunded">Dikembalikan</option></select></td><td style={tdStyle}><select value={o.order_status} disabled={busy} onChange={e => updateOrder(o, "order_status", e.target.value)} style={selectStyle}><option value="pending_payment">Menunggu pembayaran</option><option value="processing">Diproses</option><option value="completed">Selesai</option><option value="cancelled">Dibatalkan</option></select></td><td style={tdStyle}><div style={{ display: "flex", flexDirection: "column", gap: 7, minWidth: 132 }}><button type="button" disabled={busy || o.order_status === "cancelled" || o.order_status === "completed" || o.payment_status === "paid" || o.payment_status === "refunded"} onClick={() => cancelOrder(o)} style={dangerButtonStyle}>Batalkan</button><button type="button" disabled={busy || o.order_status !== "cancelled" || !["pending", "failed"].includes(o.payment_status)} onClick={() => deleteOrder(o)} style={deleteButtonStyle}>Hapus permanen</button></div></td></tr>)}</tbody></table>{visibleOrders.length === 0 && <p style={{ color: "#687087" }}>{orders.length === 0 ? "Belum ada pesanan." : "Tidak ada pesanan pada filter ini."}</p>}</div>
         </section>
       </>}
       {notice && <p role="status" style={{ marginTop: 18, padding: 14, background: "white", border: "1px solid #e8eaf1", borderRadius: 12, overflowWrap: "anywhere" }}>{notice}</p>}
@@ -387,6 +454,8 @@ const inputStyle: React.CSSProperties = { display: "block", width: "100%", margi
 const buttonStyle: React.CSSProperties = { padding: "12px 16px", marginTop: 16, border: 0, borderRadius: 9, background: "#5c5de8", color: "white", fontWeight: 800, cursor: "pointer" };
 const secondaryButtonStyle: React.CSSProperties = { padding: "8px 12px", border: "1px solid #dfe2ec", borderRadius: 8, background: "white", color: "#10162a", fontWeight: 700, cursor: "pointer" };
 const dangerButtonStyle: React.CSSProperties = { padding: "8px 12px", border: "1px solid #fecaca", borderRadius: 8, background: "#fff1f2", color: "#be123c", fontWeight: 800, cursor: "pointer" };
+const deleteButtonStyle: React.CSSProperties = { padding: "8px 12px", border: "1px solid #fecaca", borderRadius: 8, background: "#be123c", color: "white", fontWeight: 800, cursor: "pointer" };
+const filterButtonActiveStyle: React.CSSProperties = { ...secondaryButtonStyle, background: "#5c5de8", borderColor: "#5c5de8", color: "white" };
 const enabledButtonStyle: React.CSSProperties = { padding: "8px 12px", border: "1px solid #a7f3d0", borderRadius: 8, background: "#ecfdf5", color: "#047857", fontWeight: 800, cursor: "pointer" };
 const panelStyle: React.CSSProperties = { background: "white", padding: 20, borderRadius: 18, border: "1px solid #e8eaf1", marginBottom: 18 };
 const labelStyle: React.CSSProperties = { display: "block", fontWeight: 700, fontSize: 13 };
