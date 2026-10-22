@@ -331,17 +331,17 @@ export default function HomePage() {
       <section className="help-section" id="bantuan"><div className="container">
         <div className="section-heading"><div><span className="eyebrow">BANTUAN</span><h2>Pertanyaan umum<span>.</span></h2></div></div>
         <div className="faq-grid">
-          <details><summary>Apakah pembayaran sudah aktif?</summary><p>Pembayaran nyata belum diaktifkan oleh halaman demo ini. Status lunas hanya boleh ditetapkan setelah verifikasi.</p></details>
+          <details><summary>Bagaimana cara membayar?</summary><p>Setelah pesanan dicatat, tunggu konfirmasi admin melalui kontak yang kamu berikan. Jangan mengirim bukti transfer ke pihak yang tidak terverifikasi. Pesanan belum lunas sampai pembayaran diperiksa admin.</p></details>
           <details><summary>Apakah semua paket memakai undangan tim?</summary><p>Tidak. Metode aktivasi harus sesuai dukungan dan ketentuan resmi setiap penyedia.</p></details>
           <details><summary>Apakah saya perlu memberi password atau OTP?</summary><p>Tidak. Jangan pernah memasukkan password, OTP, atau kode pemulihan.</p></details>
-          <details><summary>Apakah harga di katalog berlaku?</summary><p>Harga demo hanya contoh. Harga aktual harus dikonfirmasi sebelum transaksi.</p></details>
+          <details><summary>Bagaimana jika produk bermasalah?</summary><p>Hubungi PrimeHub dengan kode pesanan. Jika produk tidak diserahkan, tidak sesuai deskripsi, atau akses tidak dapat dipulihkan/diganti selama masa yang dijanjikan, kamu dapat mengajukan penggantian atau pengembalian dana sesuai kebijakan.</p></details>
         </div>
-        <div className="notice final-notice">Sebelum digunakan untuk pelanggan sungguhan, pastikan keamanan backend, kebijakan privasi, syarat layanan, dukungan pelanggan, dan pembayaran resmi sudah siap.</div>
+        <div className="notice final-notice">Pesanan baru berstatus menunggu verifikasi sampai admin mengonfirmasi pembayaran dan pemenuhan pesanan. Baca Syarat Layanan dan Kebijakan Pengembalian Dana sebelum melanjutkan.</div>
       </div></section>
 
       <footer className="site-footer"><div className="container">
         <div className="footer-top"><a className="footer-brand" href="#home"><Image src="/primehub/primehub-logo.svg" alt="PrimeHub" width={140} height={40} /></a><p>Premium Services. Better Life.</p><a className="footer-link" href="#layanan">Kembali ke katalog <ArrowRight size={15} /></a></div>
-        <div className="footer-bottom"><span>© {new Date().getFullYear()} PrimeHub.</span><span>Informasi produk pihak ketiga perlu dibaca sebelum memesan.</span><span className="footer-legal-links"><a href="/primehub/kebijakan-privasi/">Kebijakan Privasi</a><a href="/primehub/pengembalian-dana/">Pengembalian Dana</a></span></div>
+        <div className="footer-bottom"><span>© {new Date().getFullYear()} PrimeHub.</span><span>Informasi produk pihak ketiga perlu dibaca sebelum memesan.</span><span className="footer-legal-links"><a href="/primehub/syarat-ketentuan/">Syarat Layanan</a><a href="/primehub/kebijakan-privasi/">Kebijakan Privasi</a><a href="/primehub/pengembalian-dana/">Pengembalian Dana</a></span></div>
       </div></footer>
 
       {selectedService && <div className="modal-backdrop" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) setSelectedService(null); }}>
@@ -353,12 +353,12 @@ export default function HomePage() {
             <p className="modal-note">Informasi pada mode demo adalah contoh, bukan jaminan ketersediaan layanan.</p><button className="button button-primary form-submit" type="button" onClick={() => setModalMode("order")}>Lanjut ke formulir <ArrowRight size={17} /></button>
           </div> : !submitted ? <>
             <span className={"service-icon modal-service-icon " + selectedService.tone}>{selectedService.icon}</span><span className="eyebrow">FORMULIR PERMINTAAN</span><h2 id="order-title">Tertarik dengan {selectedService.name}?</h2>
-            <p>{selectedService.productId ? "Pesanan akan berstatus menunggu verifikasi admin. Pembayaran tidak otomatis dianggap lunas." : "Isi formulir untuk melihat ringkasan demo. Data belum dikirim ke backend."}</p>
+            <p>{selectedService.productId ? "Pesanan dicatat dengan status menunggu verifikasi. Admin perlu mengonfirmasi ketersediaan dan memberikan instruksi pembayaran/aktivasi. Jangan kirim password, OTP, PIN, atau kode pemulihan." : "Isi formulir untuk melihat ringkasan demo. Data belum dikirim ke backend."}</p>
             <form onSubmit={submitInquiry} className="inquiry-form">
               <label>Nama<input required maxLength={90} value={customerName} onChange={(event) => setCustomerName(event.target.value)} placeholder="Nama kamu" /></label>
               <label>Email atau WhatsApp<input required maxLength={150} value={customerContact} onChange={(event) => setCustomerContact(event.target.value)} placeholder="Kontak yang bisa dihubungi" /></label>
               <label>Catatan (opsional)<textarea maxLength={300} value={customerNote} onChange={(event) => setCustomerNote(event.target.value)} placeholder="Pertanyaan atau paket yang ingin dikonfirmasi" rows={3} /></label>
-              <label className="policy-consent"><input type="checkbox" required /> <span>Saya telah membaca <a href="/primehub/kebijakan-privasi/" target="_blank" rel="noreferrer">Kebijakan Privasi</a> dan <a href="/primehub/pengembalian-dana/" target="_blank" rel="noreferrer">Kebijakan Pengembalian Dana</a>.</span></label>
+              <label className="policy-consent"><input type="checkbox" required /> <span>Saya telah membaca <a href="/primehub/syarat-ketentuan/" target="_blank" rel="noreferrer">Syarat Layanan</a>, <a href="/primehub/kebijakan-privasi/" target="_blank" rel="noreferrer">Kebijakan Privasi</a>, dan <a href="/primehub/pengembalian-dana/" target="_blank" rel="noreferrer">Kebijakan Pengembalian Dana</a>.</span></label>
               {requestError && <p className="form-error" role="alert">{requestError}</p>}<button type="submit" className="button button-primary form-submit" disabled={submitting}>{submitting ? "Memproses…" : selectedService.productId ? "Buat pesanan" : "Buat ringkasan demo"} <ArrowRight size={17} /></button>
             </form>
           </> : <div className="request-summary">
