@@ -40,6 +40,44 @@ const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY || process.
 const supabase = supabaseUrl && supabaseKey ? createClient(supabaseUrl, supabaseKey, { auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false } }) : null;
 const money = (value: number) => new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", maximumFractionDigits: 0 }).format(value);
 
+const fallbackCatalogServices: Service[] = [
+  {
+    id: "5a5a10f2-f820-4523-9927-dfd3190d7964",
+    productId: "5a5a10f2-f820-4523-9927-dfd3190d7964",
+    name: "Canva Premium",
+    app: "Canva Premium",
+    category: "Desain & Kreativitas",
+    description: "Paket Canva Premium untuk 1 bulan. Harga awal sementara; pastikan jenis lisensi dan metode aktivasi yang sah sebelum memproses pesanan.",
+    price: money(15000),
+    price_idr: 15000,
+    duration: "Stok tersedia",
+    icon: "🎨",
+    methodLabel: "Informasi paket",
+    eta: "Mengikuti konfirmasi admin",
+    tone: "pink",
+    featured: true,
+    stock: 10,
+    image_url: null
+  },
+  {
+    id: "63c90e10-d8ed-4904-a4ba-28e3239c9ba6",
+    productId: "63c90e10-d8ed-4904-a4ba-28e3239c9ba6",
+    name: "CapCut Premium",
+    app: "CapCut Premium",
+    category: "Video & Editing",
+    description: "Paket CapCut Premium untuk 1 bulan. Harga awal sementara; pastikan jenis lisensi dan metode aktivasi yang sah sebelum memproses pesanan.",
+    price: money(25000),
+    price_idr: 25000,
+    duration: "Stok tersedia",
+    icon: "🎬",
+    methodLabel: "Informasi paket",
+    eta: "Mengikuti konfirmasi admin",
+    tone: "green",
+    stock: 10,
+    image_url: null
+  }
+];
+
 export default function HomePage() {
   const [activeCategory, setActiveCategory] = useState("Semua");
   const [searchTerm, setSearchTerm] = useState("");
@@ -53,7 +91,7 @@ export default function HomePage() {
   const [requestError, setRequestError] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [createdOrder, setCreatedOrder] = useState<{ order_code: string; total_idr: number } | null>(null);
-  const [catalogServices, setCatalogServices] = useState<Service[]>([]);
+  const [catalogServices, setCatalogServices] = useState<Service[]>(fallbackCatalogServices);
   const [catalogStatus, setCatalogStatus] = useState<"unconfigured" | "loading" | "live" | "error">(supabase ? "loading" : "unconfigured");
 
   useEffect(() => {
@@ -100,7 +138,7 @@ export default function HomePage() {
         }
       } catch {
         if (!cancelled && !hasLoadedSuccessfully) {
-          setCatalogServices([]);
+          setCatalogServices((current) => current.length > 0 ? current : fallbackCatalogServices);
           setCatalogStatus("error");
         }
       } finally {
