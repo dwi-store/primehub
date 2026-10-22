@@ -304,7 +304,7 @@ export default function HomePage() {
             <h1>Upgrade ke Premium,<br /><span>Lebih Mudah.</span></h1>
             <p className="hero-description">Temukan pilihan langganan premium digital dengan informasi paket yang jelas dan proses aktivasi sesuai metode yang didukung tiap layanan.</p>
             <div className="hero-actions"><a className="button button-primary" href="#layanan">Jelajahi Premium <ArrowRight size={17} /></a><a className="button button-secondary" href="#cara-pesan">Cara Pesan</a></div>
-            <div className="trust-row"><span>✓ Metode transparan</span><span>✓ Status jelas</span><span>✓ Tanpa password/OTP</span></div>
+            <div className="trust-row"><span>✓ Metode transparan</span><span>✓ Status jelas</span></div>
           </div>
           <div className="hero-preview">
             <div className="preview-head">
@@ -378,17 +378,6 @@ export default function HomePage() {
           <article className="step-card"><span>03</span><h3>Konfirmasi</h3><p>Periksa ringkasan sebelum membuat permintaan atau pesanan.</p></article>
           <article className="step-card"><span>04</span><h3>Pantau status</h3><p>Untuk pesanan nyata, tunggu verifikasi admin. Demo tidak melakukan pembayaran.</p></article>
         </div>
-      </div></section>
-
-      <section className="help-section" id="bantuan"><div className="container">
-        <div className="section-heading"><div><span className="eyebrow">BANTUAN</span><h2>Pertanyaan umum<span>.</span></h2></div></div>
-        <div className="faq-grid">
-          <details><summary>Bagaimana cara membayar?</summary><p>Setelah pesanan dicatat, tunggu konfirmasi admin melalui kontak yang kamu berikan. Jangan mengirim bukti transfer ke pihak yang tidak terverifikasi. Pesanan belum lunas sampai pembayaran diperiksa admin.</p></details>
-          <details><summary>Apakah semua paket memakai undangan tim?</summary><p>Tidak. Metode aktivasi harus sesuai dukungan dan ketentuan resmi setiap penyedia.</p></details>
-          <details><summary>Apakah saya perlu memberi password atau OTP?</summary><p>Tidak. Jangan pernah memasukkan password, OTP, atau kode pemulihan.</p></details>
-          <details><summary>Bagaimana jika produk bermasalah?</summary><p>Hubungi UPPRIME dengan kode pesanan. Jika produk tidak diserahkan, tidak sesuai deskripsi, atau akses tidak dapat dipulihkan/diganti selama masa yang dijanjikan, kamu dapat mengajukan penggantian atau pengembalian dana sesuai kebijakan.</p></details>
-        </div>
-        <div className="notice final-notice">Pesanan baru berstatus menunggu verifikasi sampai admin mengonfirmasi pembayaran dan pemenuhan pesanan. Baca Syarat Layanan dan Kebijakan Pengembalian Dana sebelum melanjutkan.</div>
       </div></section>
 
       <footer className="site-footer"><div className="container">
