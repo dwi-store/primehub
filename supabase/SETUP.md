@@ -73,3 +73,18 @@ After the secrets and approved template are set, submit one test order and confi
 
 ## Launch safeguards
 The cancellation migration returns stock only when an unpaid/failed order is cancelled; cancelled orders cannot be reopened. In the admin panel, use **Batalkan** for unpaid/failed orders. Use **Hapus permanen** only after cancellation when payment status is still pending or failed; this cascades to the order items. The live RLS policy restricts delete permission to admins and those cancelled unpaid/failed records. Paid or refunded orders are intentionally retained as financial history. Paid-order refunds and inventory decisions require manual review. The public `create-order` function has `verify_jwt = false` because customers do not sign in; it allows 12 requests per minute and 80 per day per detected client IP. It stores HMAC fingerprints in a private schema rather than raw IP addresses. CAPTCHA/Turnstile and privacy/retention controls are still recommended before broad public traffic. Run the Supabase security advisors and end-to-end checkout tests before launch. Keep all secrets out of commits.
+
+
+## Midtrans Snap (automatic payment, manual fulfilment)
+The source includes an optional Midtrans Snap integration. It stays inactive until a merchant account and secrets are configured. Do not accept live payments before testing in Sandbox.
+
+1. Register/complete merchant onboarding in Midtrans and enable the payment methods you intend to accept. See the [official onboarding guide](https://docs.midtrans.com/docs/bagaimana-cara-saya-mulai-menggunakan-pembayaran-melalui-midtrans) and [Snap integration guide](https://docs.midtrans.com/docs/snap-snap-integration-guide).
+2. Apply migration `20261023_enable_midtrans_snap.sql` to allow the new payment method while preserving existing manual-DANA orders.
+3. In Supabase **Edge Functions → Secrets**, configure:
+   - `MIDTRANS_SERVER_KEY`: the server key from the matching Midtrans environment (never expose it in frontend code or GitHub).
+   - `MIDTRANS_IS_PRODUCTION`: `false` for Sandbox; switch to `true` only after production onboarding and a successful end-to-end test.
+4. Deploy Edge Functions `create-midtrans-payment` and `midtrans-notification` with JWT verification disabled only for these endpoints; both validate their own inputs, and the webhook verifies Midtrans signature plus server-side transaction status.
+5. In Midtrans Merchant Administration Portal, set Payment Notification URL to `https://cfzleqzsynzkjukmtqvf.supabase.co/functions/v1/midtrans-notification`.
+6. Test in Sandbox first: create an order, pay using Midtrans test instructions, verify that `payment_status` becomes `paid`, and confirm `order_status` remains pending for the admin to fulfil manually. Only then consider production.
+
+The payment URL is created server-side. The server key is never returned to the browser. If the gateway is not configured or payment creation fails, the order remains recorded and the customer is instructed to contact the admin before paying. Do not tell a customer that payment succeeded unless the verified webhook has updated the database.
