@@ -141,3 +141,12 @@ $$;
 
 revoke all on function public.consume_primehub_checkout_limit(text) from public, anon, authenticated;
 grant execute on function public.consume_primehub_checkout_limit(text) to service_role;
+
+-- Explicit service-role-only policy keeps private rate-limit rows unavailable
+-- through the Data API to anonymous or ordinary signed-in users.
+drop policy if exists "Service role manages checkout rate limits" on private.primehub_checkout_rate_limits;
+create policy "Service role manages checkout rate limits"
+  on private.primehub_checkout_rate_limits
+  for all to service_role
+  using (true)
+  with check (true);
