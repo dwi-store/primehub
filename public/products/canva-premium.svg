@@ -1,0 +1,36 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="600" viewBox="0 0 1200 600" role="img" aria-labelledby="title desc">
+<title id="title">Canva Premium — PrimeHub</title>
+<desc id="desc">Artwork for the Canva Premium product listing with bright turquoise and purple gradients.</desc>
+<defs>
+  <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#113b63"/><stop offset=".48" stop-color="#4927a8"/><stop offset="1" stop-color="#0bbdc6"/></linearGradient>
+  <linearGradient id="orb" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#75f4e6"/><stop offset=".52" stop-color="#5c9dff"/><stop offset="1" stop-color="#a46bff"/></linearGradient>
+  <linearGradient id="card" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ffffff" stop-opacity=".92"/><stop offset="1" stop-color="#d8faff" stop-opacity=".74"/></linearGradient>
+  <filter id="glow" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="28"/></filter>
+</defs>
+<rect width="1200" height="600" rx="32" fill="url(#bg)"/>
+<circle cx="875" cy="160" r="170" fill="#6ee7ff" opacity=".22" filter="url(#glow)"/>
+<circle cx="1020" cy="480" r="210" fill="#b38bff" opacity=".25" filter="url(#glow)"/>
+<path d="M0 465 C180 380 265 610 465 505 S780 405 935 515 S1110 580 1200 515 V600 H0Z" fill="#062b5b" opacity=".38"/>
+<g transform="translate(690 65) rotate(7 190 210)">
+  <rect x="45" y="38" width="370" height="390" rx="28" fill="#071b46" opacity=".25"/>
+  <rect x="25" y="15" width="370" height="390" rx="28" fill="url(#card)"/>
+  <rect x="53" y="44" width="314" height="204" rx="18" fill="url(#orb)"/>
+  <circle cx="210" cy="133" r="68" fill="#ffffff" opacity=".84"/>
+  <path d="M178 128 C178 93 222 83 244 109 C256 124 249 153 222 157 C204 160 192 172 192 190" fill="none" stroke="#5838c8" stroke-width="20" stroke-linecap="round"/>
+  <circle cx="191" cy="219" r="11" fill="#5838c8"/>
+  <rect x="53" y="270" width="220" height="17" rx="8.5" fill="#182c54" opacity=".8"/>
+  <rect x="53" y="300" width="285" height="10" rx="5" fill="#182c54" opacity=".25"/>
+  <rect x="53" y="320" width="250" height="10" rx="5" fill="#182c54" opacity=".18"/>
+  <rect x="53" y="352" width="114" height="28" rx="14" fill="#6d49dc"/>
+  <text x="110" y="371" fill="#fff" text-anchor="middle" font-family="Arial,Helvetica,sans-serif" font-size="12" font-weight="700">PREMIUM</text>
+</g>
+<g font-family="Arial,Helvetica,sans-serif" fill="#fff">
+  <text x="76" y="100" font-size="20" font-weight="700" letter-spacing="5" opacity=".78">PRIMEHUB • KATALOG PREMIUM</text>
+  <text x="70" y="255" font-size="88" font-weight="800" letter-spacing="-3">Canva</text>
+  <text x="74" y="330" font-size="58" font-weight="800" letter-spacing="1">PREMIUM</text>
+  <rect x="75" y="374" width="305" height="4" rx="2" fill="#78f3ed"/>
+  <text x="75" y="420" font-size="23" opacity=".9">Buat desain yang lebih kreatif</text>
+  <text x="75" y="460" font-size="18" opacity=".72">Desain • Presentasi • Konten</text>
+</g>
+<circle cx="550" cy="98" r="8" fill="#fff" opacity=".8"/><circle cx="585" cy="124" r="5" fill="#7cf0e7"/><path d="M520 170l15 15-15 15-15-15z" fill="#fff" opacity=".65"/>
+</svg>
