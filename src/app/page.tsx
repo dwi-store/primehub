@@ -3,14 +3,12 @@
 import Image from "next/image";
 import { useEffect, useMemo, useState } from "react";
 import {
-  ArrowDownRight,
   ArrowRight,
-  Check,
+  CheckCircle2,
   ChevronDown,
   CircleHelp,
   Clock3,
   Headphones,
-  Menu,
   Search,
   ShieldCheck,
   Sparkles,
@@ -21,38 +19,44 @@ import {
 type Service = {
   id: string;
   name: string;
+  app: string;
   category: string;
   description: string;
   price: string;
+  price_idr?: number;
   duration: string;
   icon: string;
+  methodLabel: string;
+  eta: string;
   tone: string;
   featured?: boolean;
   productId?: string;
-  price_idr?: number;
   stock?: number;
   image_url?: string | null;
 };
 
-const services: Service[] = [
-  { id: "chatgpt", name: "AI Assistant", category: "AI", description: "Bantu ide, belajar, dan produktivitas dengan AI.", price: "Hubungi kami", duration: "Paket tersedia", icon: "✳", tone: "mint", featured: true },
-  { id: "design", name: "Design Suite", category: "Kreativitas", description: "Perangkat desain untuk konten yang lebih menonjol.", price: "Hubungi kami", duration: "Paket tersedia", icon: "✿", tone: "pink" },
-  { id: "music", name: "Music Premium", category: "Hiburan", description: "Nikmati pengalaman mendengarkan musik yang nyaman.", price: "Hubungi kami", duration: "Paket tersedia", icon: "♫", tone: "green" },
-  { id: "video", name: "Video Premium", category: "Hiburan", description: "Temani waktu santai dengan pengalaman video premium.", price: "Hubungi kami", duration: "Paket tersedia", icon: "▶", tone: "red" },
-  { id: "cloud", name: "Cloud Storage", category: "Produktivitas", description: "Simpan dan kelola file penting dengan lebih praktis.", price: "Hubungi kami", duration: "Paket tersedia", icon: "☁", tone: "blue" },
-  { id: "learning", name: "Learning Plus", category: "Produktivitas", description: "Dukung perjalanan belajar dan pengembangan diri.", price: "Hubungi kami", duration: "Paket tersedia", icon: "✦", tone: "yellow" }
+const demoServices: Service[] = [
+  { id: "design", name: "Design Plus", app: "Design Suite", category: "Desain", description: "Fitur desain dan aset premium untuk kebutuhan kreatif.", price: "Rp29.000", price_idr: 29000, duration: "1 bulan", icon: "🎨", methodLabel: "Undangan tim", eta: "Estimasi contoh: 1–24 jam", tone: "violet", featured: true },
+  { id: "music", name: "Music Premium", app: "Music", category: "Musik", description: "Pengalaman musik dengan fitur premium.", price: "Rp19.000", price_idr: 19000, duration: "1 bulan", icon: "🎵", methodLabel: "Voucher/kode", eta: "Setelah kode tersedia (contoh)", tone: "green" },
+  { id: "cloud", name: "Cloud Extra", app: "Cloud Storage", category: "Cloud", description: "Tambahan kapasitas untuk file dan dokumen.", price: "Rp25.000", price_idr: 25000, duration: "1 bulan", icon: "☁️", methodLabel: "Email akun", eta: "Estimasi contoh: 1–24 jam", tone: "blue" },
+  { id: "work", name: "Work Pro", app: "Productivity Suite", category: "Produktivitas", description: "Fitur produktivitas dan kolaborasi.", price: "Rp39.000", price_idr: 39000, duration: "1 bulan", icon: "🗂️", methodLabel: "Undangan tim", eta: "Estimasi contoh: 1–24 jam", tone: "orange" },
+  { id: "learn", name: "Learn Plus", app: "Learning Platform", category: "Belajar", description: "Paket belajar premium untuk mendukung proses belajar.", price: "Rp49.000", price_idr: 49000, duration: "3 bulan", icon: "📚", methodLabel: "Metode resmi lain", eta: "Mengikuti instruksi (contoh)", tone: "yellow" },
+  { id: "edit", name: "Edit Studio", app: "Video Editor", category: "Editing", description: "Fitur tambahan untuk kebutuhan editing video.", price: "Rp32.000", price_idr: 32000, duration: "1 bulan", icon: "🎬", methodLabel: "Voucher/kode", eta: "Setelah kode tersedia (contoh)", tone: "pink" },
+  { id: "ai", name: "AI Assist", app: "AI Tools", category: "AI", description: "Paket fitur AI tambahan sesuai ketentuan penyedia.", price: "Rp59.000", price_idr: 59000, duration: "1 bulan", icon: "✦", methodLabel: "Email akun", eta: "Estimasi contoh: 1–24 jam", tone: "violet" },
+  { id: "design-year", name: "Design Plus Tahunan", app: "Design Suite", category: "Desain", description: "Contoh paket tahunan untuk kebutuhan desain.", price: "Rp249.000", price_idr: 249000, duration: "12 bulan", icon: "🖌️", methodLabel: "Undangan tim", eta: "Estimasi contoh: 1–24 jam", tone: "violet" },
+  { id: "cloud-year", name: "Cloud Extra Tahunan", app: "Cloud Storage", category: "Cloud", description: "Contoh paket cloud jangka panjang.", price: "Rp249.000", price_idr: 249000, duration: "12 bulan", icon: "🗃️", methodLabel: "Voucher/kode", eta: "Setelah kode tersedia (contoh)", tone: "blue" },
+  { id: "music-year", name: "Music Premium Tahunan", app: "Music", category: "Musik", description: "Contoh paket musik jangka panjang.", price: "Rp199.000", price_idr: 199000, duration: "12 bulan", icon: "🎧", methodLabel: "Voucher/kode", eta: "Setelah kode tersedia (contoh)", tone: "green" }
 ];
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL?.replace(/\/$/, "");
 const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-
 const money = (value: number) => new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", maximumFractionDigits: 0 }).format(value);
 
 export default function HomePage() {
-  const [activeCategory, setActiveCategory] = useState("Semua layanan");
+  const [activeCategory, setActiveCategory] = useState("Semua");
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedService, setSelectedService] = useState<Service | null>(null);
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [modalMode, setModalMode] = useState<"detail" | "order">("detail");
   const [customerName, setCustomerName] = useState("");
   const [customerContact, setCustomerContact] = useState("");
   const [customerNote, setCustomerNote] = useState("");
@@ -61,22 +65,17 @@ export default function HomePage() {
   const [requestError, setRequestError] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [createdOrder, setCreatedOrder] = useState<{ order_code: string; total_idr: number } | null>(null);
-  const [catalogServices, setCatalogServices] = useState<Service[]>(supabaseUrl && supabaseKey ? [] : services);
-  const [catalogStatus, setCatalogStatus] = useState<"demo" | "loading" | "live" | "error">(
-    supabaseUrl && supabaseKey ? "loading" : "demo"
-  );
+  const [catalogServices, setCatalogServices] = useState<Service[]>(supabaseUrl && supabaseKey ? [] : demoServices);
+  const [catalogStatus, setCatalogStatus] = useState<"demo" | "loading" | "live" | "error">(supabaseUrl && supabaseKey ? "loading" : "demo");
 
   useEffect(() => {
-    const projectUrl = supabaseUrl;
-    const publicKey = supabaseKey ?? "";
-    if (!projectUrl || !publicKey) return;
+    if (!supabaseUrl || !supabaseKey) return;
     let cancelled = false;
-
     async function loadCatalog() {
       try {
         const response = await fetch(
-          `${projectUrl}/rest/v1/products?select=id,name,description,category,image_url,price_idr,stock,is_active&is_active=eq.true&order=created_at.desc`,
-          { headers: { apikey: publicKey, Accept: "application/json" } }
+          `${supabaseUrl}/rest/v1/products?select=id,name,description,category,image_url,price_idr,stock,is_active&is_active=eq.true&order=created_at.desc`,
+          { headers: { apikey: supabaseKey!, Accept: "application/json" } }
         );
         if (!response.ok) throw new Error("Katalog tidak dapat dimuat.");
         const rows = await response.json() as Array<{
@@ -84,66 +83,53 @@ export default function HomePage() {
           price_idr: number | string; stock: number; is_active: boolean; image_url: string | null;
         }>;
         if (!Array.isArray(rows)) throw new Error("Format katalog tidak valid.");
-
         const mapped: Service[] = rows.map((product, index) => {
           const category = product.category?.trim() || "Lainnya";
           const categoryLower = category.toLowerCase();
-          const style = categoryLower.includes("ai") ? { icon: "✳", tone: "mint" }
-            : categoryLower.includes("hiburan") || categoryLower.includes("musik") || categoryLower.includes("video") ? { icon: "♫", tone: "green" }
-            : categoryLower.includes("kreat") || categoryLower.includes("desain") ? { icon: "✿", tone: "pink" }
-            : categoryLower.includes("cloud") || categoryLower.includes("storage") ? { icon: "☁", tone: "blue" }
-            : { icon: "✦", tone: "yellow" };
+          const style = categoryLower.includes("ai") ? { icon: "✦", tone: "violet" }
+            : categoryLower.includes("musik") || categoryLower.includes("music") || categoryLower.includes("hiburan") ? { icon: "🎵", tone: "green" }
+            : categoryLower.includes("desain") || categoryLower.includes("kreat") ? { icon: "🎨", tone: "pink" }
+            : categoryLower.includes("cloud") || categoryLower.includes("storage") ? { icon: "☁️", tone: "blue" }
+            : { icon: "✦", tone: "violet" };
           const price = Number(product.price_idr);
           return {
-            id: product.id,
-            productId: product.id,
-            name: product.name,
-            category,
-            description: product.description || "Layanan digital PrimeHub.",
-            price_idr: price,
-            stock: product.stock,
-            image_url: product.image_url,
-            price: money(price),
-            duration: product.stock > 0 ? `${product.stock} tersedia` : "Stok habis",
-            icon: style.icon,
-            tone: style.tone,
-            featured: index === 0
+            id: product.id, productId: product.id, name: product.name, app: product.name,
+            category, description: product.description || "Informasi layanan digital PrimeHub.",
+            price_idr: price, price: money(price), stock: product.stock,
+            duration: product.stock > 0 ? "Stok tersedia" : "Stok habis",
+            icon: style.icon, tone: style.tone, image_url: product.image_url,
+            methodLabel: "Informasi paket", eta: "Mengikuti konfirmasi admin", featured: index === 0
           };
         });
-        if (!cancelled) {
-          setCatalogServices(mapped);
-          setCatalogStatus("live");
-        }
+        if (!cancelled) { setCatalogServices(mapped); setCatalogStatus("live"); }
       } catch {
-        if (!cancelled) {
-          setCatalogServices([]);
-          setCatalogStatus("error");
-        }
+        if (!cancelled) { setCatalogServices([]); setCatalogStatus("error"); }
       }
     }
-
     void loadCatalog();
     return () => { cancelled = true; };
   }, []);
 
   const categoryOptions = useMemo(
-    () => ["Semua layanan", ...Array.from(new Set(catalogServices.map((service) => service.category).filter(Boolean)))],
+    () => ["Semua", ...Array.from(new Set(catalogServices.map((service) => service.category).filter(Boolean)))],
     [catalogServices]
   );
-
   const filteredServices = useMemo(() => catalogServices.filter((service) => {
-    const categoryMatch = activeCategory === "Semua layanan" || service.category === activeCategory;
+    const categoryMatch = activeCategory === "Semua" || service.category === activeCategory;
     const query = searchTerm.toLowerCase().trim();
-    const searchMatch = !query || service.name.toLowerCase().includes(query) || service.description.toLowerCase().includes(query) || service.category.toLowerCase().includes(query);
-    return categoryMatch && searchMatch;
+    return categoryMatch && (!query || [service.name, service.app, service.description, service.category].some((value) => value.toLowerCase().includes(query)));
   }), [activeCategory, catalogServices, searchTerm]);
 
-  function openOrder(service: Service) {
+  function openService(service: Service, mode: "detail" | "order") {
     setSelectedService(service);
+    setModalMode(mode);
     setSubmitted(false);
     setRequestSummary("");
     setRequestError("");
     setCreatedOrder(null);
+    setCustomerName("");
+    setCustomerContact("");
+    setCustomerNote("");
   }
 
   async function submitInquiry(event: React.FormEvent<HTMLFormElement>) {
@@ -155,10 +141,7 @@ export default function HomePage() {
       if (selectedService.productId && supabaseUrl && supabaseKey) {
         const response = await fetch(`${supabaseUrl}/functions/v1/create-order`, {
           method: "POST",
-          headers: {
-            apikey: supabaseKey,
-            "Content-Type": "application/json"
-          },
+          headers: { apikey: supabaseKey, "Content-Type": "application/json" },
           body: JSON.stringify({
             customer_name: customerName,
             customer_contact: customerContact,
@@ -171,7 +154,7 @@ export default function HomePage() {
         const order = result.order;
         const orderTotal = Number(order?.total_idr);
         if (!order?.order_code || !Number.isFinite(orderTotal) || orderTotal < 0) {
-          throw new Error("Respons pesanan tidak lengkap. Jangan ulangi pembayaran; hubungi admin untuk memeriksa kode pesanan.");
+          throw new Error("Respons pesanan tidak lengkap. Hubungi admin untuk memeriksa kode pesanan.");
         }
         const summary = [
           "PrimeHub — ringkasan pesanan",
@@ -188,15 +171,16 @@ export default function HomePage() {
         setSubmitted(true);
         return;
       }
-
-      const message = [
-        "Halo PrimeHub, saya ingin bertanya tentang layanan.",
+      setRequestSummary([
+        "PrimeHub — ringkasan permintaan demo",
         "Layanan: " + selectedService.name,
+        "Harga contoh: " + selectedService.price,
         "Nama: " + customerName,
         "Kontak: " + customerContact,
-        customerNote ? "Catatan: " + customerNote : ""
-      ].filter(Boolean).join("\n");
-      setRequestSummary(message);
+        customerNote ? "Catatan: " + customerNote : "",
+        "",
+        "Ini hanya demo lokal. Belum ada transaksi atau aktivasi nyata."
+      ].filter(Boolean).join("\n"));
       setSubmitted(true);
     } catch (error) {
       setRequestError(error instanceof Error ? error.message : "Permintaan gagal diproses.");
@@ -206,121 +190,125 @@ export default function HomePage() {
   }
 
   return (
-    <main>
-      <div className="announcement"><Sparkles size={14} /> Pilihan layanan digital untuk hari yang lebih produktif <ArrowRight size={14} /></div>
+    <main className="primehub-app">
       <header className="site-header">
-        <a className="brand" href="#" aria-label="PrimeHub beranda">
-          <Image src="/primehub/primehub-logo.svg" alt="PrimeHub" width={168} height={48} priority />
-        </a>
-        <nav className={mobileMenuOpen ? "nav-links nav-open" : "nav-links"} aria-label="Navigasi utama">
-          <a href="#layanan" onClick={() => setMobileMenuOpen(false)}>Jelajahi layanan</a>
-          <a href="#keunggulan" onClick={() => setMobileMenuOpen(false)}>Kenapa PrimeHub?</a>
-          <a href="#bantuan" onClick={() => setMobileMenuOpen(false)}>Bantuan</a>
-        </nav>
-        <div className="header-actions">
-          <a className="text-link" href="#layanan">Lihat katalog <ArrowDownRight size={16} /></a>
-          <button className="mobile-menu" aria-label={mobileMenuOpen ? "Tutup menu" : "Buka menu"} onClick={() => setMobileMenuOpen(!mobileMenuOpen)}>{mobileMenuOpen ? <X /> : <Menu />}</button>
+        <div className="container nav">
+          <a className="brand" href="#home" aria-label="PrimeHub beranda">
+            <Image src="/primehub/primehub-logo.svg" alt="PrimeHub" width={150} height={42} priority />
+          </a>
+          <nav className="nav-links" aria-label="Navigasi utama">
+            <a href="#home">Beranda</a><a href="#layanan">Katalog Premium</a><a href="#cara-pesan">Cara Pesan</a><a href="#bantuan">Bantuan</a>
+          </nav>
+          <div className="header-actions"><a className="button button-primary" href="#layanan">Jelajahi <ArrowRight size={16} /></a></div>
         </div>
       </header>
 
-      <section className="hero">
-        <div className="hero-copy">
-          <div className="eyebrow"><span className="eyebrow-dot" /> YOUR DIGITAL UPGRADE</div>
-          <h1>Lebih banyak yang bisa kamu lakukan<span>.</span></h1>
-          <p className="hero-description">Layanan digital premium yang membantumu berkarya, menikmati hiburan, dan menjalani hari dengan lebih mudah.</p>
-          <div className="hero-actions">
-            <a className="button button-primary" href="#layanan">Jelajahi layanan <ArrowRight size={17} /></a>
-            <a className="button button-secondary" href="#keunggulan">Kenali PrimeHub</a>
+      <section className="hero" id="home">
+        <div className="container hero-grid">
+          <div className="hero-copy">
+            <span className="eyebrow"><Sparkles size={14} /> Premium Services. Better Life.</span>
+            <h1>Upgrade ke Premium,<br /><span>Lebih Mudah.</span></h1>
+            <p className="hero-description">Temukan pilihan langganan premium digital dengan informasi paket yang jelas dan proses aktivasi sesuai metode yang didukung tiap layanan.</p>
+            <div className="hero-actions"><a className="button button-primary" href="#layanan">Jelajahi Premium <ArrowRight size={17} /></a><a className="button button-secondary" href="#cara-pesan">Cara Pesan</a></div>
+            <div className="trust-row"><span>✓ Metode transparan</span><span>✓ Status jelas</span><span>✓ Tanpa password/OTP</span></div>
           </div>
-          <div className="trust-row">
-            <div className="trust-avatars"><span>✦</span><span>✳</span><span>◈</span></div>
-            <div><strong>Praktis, jelas, nyaman.</strong><small>Pengalaman layanan yang lebih simpel</small></div>
+          <div className="hero-preview">
+            <div className="preview-head"><div><strong>Pilihan Premium</strong><small>Pratinjau katalog</small></div><span className="demo-tag">DEMO</span></div>
+            <div className="preview-item"><span className="preview-icon">🎨</span><span><b>Design Plus</b><small>Desain kreatif</small></span><strong className="preview-price">Rp29 rb</strong></div>
+            <div className="preview-item"><span className="preview-icon">🎵</span><span><b>Music Premium</b><small>Musik &amp; audio</small></span><strong className="preview-price">Rp19 rb</strong></div>
+            <div className="preview-item"><span className="preview-icon">☁️</span><span><b>Cloud Extra</b><small>Penyimpanan cloud</small></span><strong className="preview-price">Rp25 rb</strong></div>
+            <p className="preview-note">Harga pada pratinjau hanya contoh.</p>
           </div>
         </div>
-        <div className="hero-art" aria-label="Ilustrasi layanan digital PrimeHub">
-          <div className="art-glow" />
-          <div className="orbit orbit-one" /><div className="orbit orbit-two" />
-          <div className="floating-card floating-card-top"><span className="mini-icon mint">✳</span><span><b>Work smarter</b><small>Ruang untuk ide baru</small></span><Check size={17} className="check-icon" /></div>
-          <div className="hub-card">
-            <div className="hub-logo-mark"><Image src="/favicon.svg" alt="" width={70} height={70} /></div>
-            <span className="hub-overline">YOUR PREMIUM HUB</span>
-            <h2>Make room<br />for more.</h2>
-            <div className="hub-card-bottom"><span>PRIMEHUB</span><Sparkles size={17} /></div>
-          </div>
-          <div className="floating-card floating-card-bottom"><span className="mini-icon violet"><Zap size={19} /></span><span><b>Simple by design</b><small>Pilih layananmu, mulai langkahmu</small></span></div>
-          <div className="spark spark-one">✳</div><div className="spark spark-two">✦</div><div className="spark spark-three">·</div>
-        </div>
-        <div className="hero-bottom-label"><span>01 / DISCOVER</span><span>TOOLS FOR YOUR EVERYDAY</span></div>
-      </section>
-
-      <section className="benefit-strip" id="keunggulan">
-        <div className="benefit"><span className="benefit-icon"><ShieldCheck size={19} /></span><div><b>Transparan</b><small>Informasi layanan yang jelas</small></div></div>
-        <div className="benefit"><span className="benefit-icon"><Zap size={19} /></span><div><b>Praktis</b><small>Alur pemesanan sederhana</small></div></div>
-        <div className="benefit"><span className="benefit-icon"><Headphones size={19} /></span><div><b>Siap membantu</b><small>Dukungan saat kamu butuh</small></div></div>
-        <div className="benefit"><span className="benefit-icon"><Clock3 size={19} /></span><div><b>Hemat waktu</b><small>Semua pilihan dalam satu tempat</small></div></div>
       </section>
 
       <section className="catalog section-wrap" id="layanan">
-        <div className="section-heading">
-          <div><div className="eyebrow"><span className="eyebrow-dot" /> THE PRIME COLLECTION</div><h2>Temukan yang kamu butuhkan<span>.</span></h2><p>Kurasi layanan digital untuk mendukung setiap sisi keseharianmu.</p></div>
-          <div className="catalog-count"><strong>{filteredServices.length.toString().padStart(2, "0")}</strong><span>LAYANAN</span></div>
-        </div>
-        <div className="catalog-tools">
-          <div className="category-tabs" role="group" aria-label="Filter kategori">
-            {categoryOptions.map((category) => <button key={category} className={activeCategory === category ? "category-tab active" : "category-tab"} onClick={() => setActiveCategory(category)}>{category}</button>)}
+        <div className="container">
+          <div className="section-heading"><div><span className="eyebrow">KATALOG PREMIUM</span><h2>Temukan paket yang cocok<span>.</span></h2><p>Cari aplikasi, pilih kategori, lalu lihat detail metode aktivasi setiap paket.</p></div><span className="catalog-count">{filteredServices.length.toString().padStart(2, "0")} PAKET</span></div>
+          <div className={catalogStatus === "demo" ? "notice demo-notice" : "notice"}>
+            {catalogStatus === "live" ? "Katalog dimuat dari backend. Periksa detail paket sebelum membuat pesanan." : catalogStatus === "loading" ? "Memuat katalog PrimeHub…" : catalogStatus === "error" ? "Katalog backend belum bisa dimuat. Periksa konfigurasi Supabase." : "Mode demo: harga dan paket adalah contoh. Pembayaran dan aktivasi nyata belum tersedia."}
           </div>
-          <label className="search-box"><Search size={17} /><input value={searchTerm} onChange={(event) => setSearchTerm(event.target.value)} placeholder="Cari layanan..." aria-label="Cari layanan" />{searchTerm && <button onClick={() => setSearchTerm("")} aria-label="Hapus pencarian"><X size={15} /></button>}</label>
+          <div className="catalog-tools">
+            <label className="search-box"><Search size={17} /><input value={searchTerm} onChange={(event) => setSearchTerm(event.target.value)} placeholder="Cari aplikasi atau paket premium…" aria-label="Cari layanan" />{searchTerm && <button type="button" onClick={() => setSearchTerm("")} aria-label="Hapus pencarian"><X size={15} /></button>}</label>
+            <div className="category-tabs" role="group" aria-label="Filter kategori">
+              {categoryOptions.map((category) => <button type="button" key={category} className={activeCategory === category ? "category-tab active" : "category-tab"} onClick={() => setActiveCategory(category)}>{category}</button>)}
+            </div>
+          </div>
+          <div className="service-grid">
+            {filteredServices.map((service) => <article className="service-card" key={service.id}>
+              <div className="service-card-top">{service.image_url ? <img src={service.image_url} alt={service.name} loading="lazy" /> : <span className={"service-icon " + service.tone}>{service.icon}</span>}<span className="demo-tag">DEMO</span></div>
+              <span className="service-category">{service.category}</span><h3>{service.name}</h3><p>{service.description}</p>
+              <div className="service-meta"><span>{service.duration}</span><span>{service.methodLabel}</span></div>
+              <div className="service-card-bottom"><div><small>{catalogStatus === "live" ? "Harga" : "Harga contoh"}</small><strong>{service.price}</strong></div><div className="card-buttons"><button className="button button-secondary button-small" type="button" onClick={() => openService(service, "detail")}>Detail</button><button className="button button-primary button-small" type="button" disabled={Boolean(service.productId && (service.stock ?? 0) <= 0)} onClick={() => openService(service, "order")}>Pesan</button></div></div>
+            </article>)}
+            {filteredServices.length === 0 && <div className="empty-state"><Search size={28} /><h3>{catalogStatus === "loading" ? "Memuat katalog…" : catalogStatus === "error" ? "Katalog belum bisa dimuat" : "Paket tidak ditemukan"}</h3><p>{catalogStatus === "error" ? "Koneksi katalog sedang bermasalah. Coba lagi nanti." : "Coba kata kunci atau kategori lain."}</p><button className="button button-secondary" type="button" onClick={() => { setSearchTerm(""); setActiveCategory("Semua"); }}>Reset pencarian</button></div>}
+          </div>
+          <p className="catalog-note"><CircleHelp size={15} /> Data dan harga demo hanya untuk pengujian tampilan; pastikan paket dan harga aktual dikonfirmasi sebelum transaksi.</p>
         </div>
-        <div className="service-grid">
-          {filteredServices.map((service, index) => <article className="service-card" key={service.id}>
-            <div className="service-card-top">{service.image_url ? <img src={service.image_url} alt={service.name} loading="lazy" style={{ width: "100%", height: 180, objectFit: "cover", borderRadius: 14 }} /> : <span className={"service-icon " + service.tone}>{service.icon}</span>}<span className="service-number">0{index + 1}</span></div>
-            {service.featured && <span className="popular-label"><Sparkles size={12} /> PILIHAN POPULER</span>}
-            <span className="service-category">{service.category}</span>
-            <h3>{service.name}</h3><p>{service.description}</p>
-            <div className="service-card-bottom"><div><strong>{service.price}</strong><small>{service.duration}</small></div><button className="round-arrow" aria-label={"Tanya tentang " + service.name} disabled={Boolean(service.productId && (service.stock ?? 0) <= 0)} onClick={() => openOrder(service)}><ArrowRight size={18} /></button></div>
-          </article>)}
-          {filteredServices.length === 0 && <div className="empty-state"><Search size={26} /><h3>{catalogStatus === "loading" ? "Memuat katalog..." : catalogStatus === "error" ? "Katalog belum bisa dimuat" : catalogStatus === "live" ? "Belum ada produk tersedia" : "Layanan belum ditemukan"}</h3><p>{catalogStatus === "error" ? "Koneksi katalog sedang bermasalah. Coba lagi nanti." : catalogStatus === "loading" ? "Mengambil produk PrimeHub terbaru." : "Coba kata kunci atau kategori lainnya."}</p>{catalogStatus !== "loading" && catalogStatus !== "error" && <button className="button button-secondary" onClick={() => { setSearchTerm(""); setActiveCategory("Semua layanan"); }}>Reset pencarian</button>}</div>}
-        </div>
-        <p className="catalog-note"><CircleHelp size={15} /> {catalogStatus === "live" ? "Harga dan stok diambil langsung dari katalog PrimeHub." : catalogStatus === "loading" ? "Sedang memuat katalog dari backend." : catalogStatus === "error" ? "Katalog tidak tersedia karena koneksi backend bermasalah." : "Katalog menggunakan data contoh; pesanan belum dikirim ke backend."}</p>
       </section>
 
-      <section className="closing-cta">
-        <div className="cta-orb cta-orb-one" /><div className="cta-orb cta-orb-two" />
-        <div className="eyebrow"><span className="eyebrow-dot" /> MAKE IT YOURS</div>
-        <h2>Siap upgrade rutinitasmu<span>?</span></h2>
-        <p>Jelajahi pilihan layanan dan temukan yang paling sesuai untukmu.</p>
-        <a className="button button-light" href="#layanan">Mulai jelajahi <ArrowRight size={17} /></a>
-      </section>
+      <section className="features-section" id="keunggulan"><div className="container">
+        <div className="section-heading"><div><span className="eyebrow">KENAPA PRIMEHUB?</span><h2>Lebih jelas dari awal<span>.</span></h2></div></div>
+        <div className="features-grid">
+          <article className="feature-card"><ShieldCheck /><h3>Metode sesuai paket</h3><p>Metode aktivasi diatur per paket, bukan disamakan untuk semua aplikasi.</p></article>
+          <article className="feature-card"><CheckCircle2 /><h3>Privasi pelanggan</h3><p>Jangan pernah membagikan password, OTP, atau kode pemulihan akun.</p></article>
+          <article className="feature-card"><Clock3 /><h3>Status terpisah</h3><p>Status pembayaran dan aktivasi dicatat secara terpisah saat layanan tersedia.</p></article>
+        </div>
+      </div></section>
 
-      <footer className="site-footer" id="bantuan">
-        <div className="footer-top"><a className="brand footer-brand" href="#"><Image src="/primehub/primehub-logo-dark.png" alt="PrimeHub" width={168} height={48} /></a><p>Premium Services. Better Life.</p><a href="#layanan" className="footer-link">Jelajahi katalog <ArrowRight size={15} /></a></div>
-        <div className="footer-bottom"><span>© {new Date().getFullYear()} PrimeHub. All rights reserved.</span><span>Layanan harus digunakan sesuai ketentuan resmi penyedia masing-masing.</span></div>
-      </footer>
+      <section className="steps-section" id="cara-pesan"><div className="container">
+        <div className="section-heading"><div><span className="eyebrow">CARA PESAN</span><h2>Empat langkah sederhana<span>.</span></h2><p>Alur yang jelas dari memilih paket sampai memeriksa ringkasan.</p></div></div>
+        <div className="steps-grid">
+          <article className="step-card"><span>01</span><h3>Pilih paket</h3><p>Baca durasi, harga contoh, dan metode aktivasi.</p></article>
+          <article className="step-card"><span>02</span><h3>Isi formulir</h3><p>Masukkan informasi kontak yang diperlukan saja.</p></article>
+          <article className="step-card"><span>03</span><h3>Konfirmasi</h3><p>Periksa ringkasan sebelum membuat permintaan atau pesanan.</p></article>
+          <article className="step-card"><span>04</span><h3>Pantau status</h3><p>Untuk pesanan nyata, tunggu verifikasi admin. Demo tidak melakukan pembayaran.</p></article>
+        </div>
+      </div></section>
+
+      <section className="help-section" id="bantuan"><div className="container">
+        <div className="section-heading"><div><span className="eyebrow">BANTUAN</span><h2>Pertanyaan umum<span>.</span></h2></div></div>
+        <div className="faq-grid">
+          <details><summary>Apakah pembayaran sudah aktif?</summary><p>Pembayaran nyata belum diaktifkan oleh halaman demo ini. Status lunas hanya boleh ditetapkan setelah verifikasi.</p></details>
+          <details><summary>Apakah semua paket memakai undangan tim?</summary><p>Tidak. Metode aktivasi harus sesuai dukungan dan ketentuan resmi setiap penyedia.</p></details>
+          <details><summary>Apakah saya perlu memberi password atau OTP?</summary><p>Tidak. Jangan pernah memasukkan password, OTP, atau kode pemulihan.</p></details>
+          <details><summary>Apakah harga di katalog berlaku?</summary><p>Harga demo hanya contoh. Harga aktual harus dikonfirmasi sebelum transaksi.</p></details>
+        </div>
+        <div className="notice final-notice">Sebelum digunakan untuk pelanggan sungguhan, pastikan keamanan backend, kebijakan privasi, syarat layanan, dukungan pelanggan, dan pembayaran resmi sudah siap.</div>
+      </div></section>
+
+      <footer className="site-footer"><div className="container">
+        <div className="footer-top"><a className="footer-brand" href="#home"><Image src="/primehub/primehub-logo.svg" alt="PrimeHub" width={140} height={40} /></a><p>Premium Services. Better Life.</p><a className="footer-link" href="#layanan">Kembali ke katalog <ArrowRight size={15} /></a></div>
+        <div className="footer-bottom"><span>© {new Date().getFullYear()} PrimeHub.</span><span>Prototype demo — bukan toko aktif atau klaim kemitraan resmi.</span></div>
+      </div></footer>
 
       {selectedService && <div className="modal-backdrop" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) setSelectedService(null); }}>
         <section className="order-modal" role="dialog" aria-modal="true" aria-labelledby="order-title">
-          <button className="modal-close" aria-label="Tutup" onClick={() => setSelectedService(null)}><X size={20} /></button>
-          {!submitted ? <>
-            <div className={"service-icon modal-service-icon " + selectedService.tone}>{selectedService.icon}</div>
-            <div className="eyebrow"><span className="eyebrow-dot" /> REQUEST INFORMATION</div>
-            <h2 id="order-title">Tertarik dengan {selectedService.name}?</h2>
-            <p>{selectedService.productId ? "Isi kontak untuk membuat pesanan. Pembayaran tetap berstatus menunggu sampai diverifikasi admin." : "Isi detail berikut untuk menyiapkan ringkasan permintaan. Ringkasan contoh belum dikirim ke backend."}</p>
+          <button className="modal-close" type="button" aria-label="Tutup" onClick={() => setSelectedService(null)}><X size={20} /></button>
+          {!submitted && modalMode === "detail" ? <div className="service-detail">
+            <span className={"service-icon modal-service-icon " + selectedService.tone}>{selectedService.icon}</span><span className="eyebrow">DETAIL PAKET</span><h2 id="order-title">{selectedService.name}</h2><p>{selectedService.description}</p>
+            <div className="detail-list"><div><span>Durasi</span><strong>{selectedService.duration}</strong></div><div><span>Metode</span><strong>{selectedService.methodLabel}</strong></div><div><span>Harga contoh</span><strong>{selectedService.price}</strong></div><div><span>Estimasi</span><strong>{selectedService.eta}</strong></div></div>
+            <p className="modal-note">Informasi pada mode demo adalah contoh, bukan jaminan ketersediaan layanan.</p><button className="button button-primary form-submit" type="button" onClick={() => setModalMode("order")}>Lanjut ke formulir <ArrowRight size={17} /></button>
+          </div> : !submitted ? <>
+            <span className={"service-icon modal-service-icon " + selectedService.tone}>{selectedService.icon}</span><span className="eyebrow">FORMULIR PERMINTAAN</span><h2 id="order-title">Tertarik dengan {selectedService.name}?</h2>
+            <p>{selectedService.productId ? "Pesanan akan berstatus menunggu verifikasi admin. Pembayaran tidak otomatis dianggap lunas." : "Isi formulir untuk melihat ringkasan demo. Data belum dikirim ke backend."}</p>
             <form onSubmit={submitInquiry} className="inquiry-form">
-              <label>Nama<input required value={customerName} onChange={(event) => setCustomerName(event.target.value)} placeholder="Nama kamu" /></label>
-              <label>Kontak yang bisa dihubungi<input required value={customerContact} onChange={(event) => setCustomerContact(event.target.value)} placeholder="Email atau nomor WhatsApp" /></label>
-              <label>Catatan (opsional)<textarea value={customerNote} onChange={(event) => setCustomerNote(event.target.value)} placeholder="Paket atau pertanyaan yang ingin dikonfirmasi" rows={3} /></label>
-              {requestError && <p role="alert" style={{ color: "#c2374b", lineHeight: 1.6 }}>{requestError}</p>}<button type="submit" className="button button-primary form-submit" disabled={submitting}>{submitting ? "Memproses..." : selectedService.productId ? "Buat pesanan" : "Buat ringkasan permintaan"} <ArrowRight size={17} /></button>
+              <label>Nama<input required maxLength={90} value={customerName} onChange={(event) => setCustomerName(event.target.value)} placeholder="Nama kamu" /></label>
+              <label>Email atau WhatsApp<input required maxLength={150} value={customerContact} onChange={(event) => setCustomerContact(event.target.value)} placeholder="Kontak yang bisa dihubungi" /></label>
+              <label>Catatan (opsional)<textarea maxLength={300} value={customerNote} onChange={(event) => setCustomerNote(event.target.value)} placeholder="Pertanyaan atau paket yang ingin dikonfirmasi" rows={3} /></label>
+              {requestError && <p className="form-error" role="alert">{requestError}</p>}<button type="submit" className="button button-primary form-submit" disabled={submitting}>{submitting ? "Memproses…" : selectedService.productId ? "Buat pesanan" : "Buat ringkasan demo"} <ArrowRight size={17} /></button>
             </form>
           </> : <div className="request-summary">
-            <span className="success-mark"><Check size={28} /></span><div className="eyebrow">REQUEST SUMMARY</div><h2 id="order-title">Ringkasan siap disalin</h2><p>{createdOrder ? "Pesanan tercatat dengan status menunggu verifikasi. Simpan kode ini; jangan menganggap pesanan lunas sebelum pembayaran diverifikasi." : "Ini hanya ringkasan permintaan lokal dan belum dikirim ke backend."}</p>
-            {createdOrder && <p><strong>Kode pesanan: {createdOrder.order_code}</strong><br />Total: {money(createdOrder.total_idr)}<br />Pembayaran: Menunggu verifikasi admin</p>}
+            <span className="success-mark"><CheckCircle2 size={28} /></span><span className="eyebrow">RINGKASAN</span><h2 id="order-title">{createdOrder ? "Pesanan tercatat" : "Ringkasan siap disalin"}</h2>
+            <p>{createdOrder ? "Status pesanan menunggu verifikasi admin. Simpan kode ini dan jangan menganggap pesanan lunas sebelum pembayaran diverifikasi." : "Ini ringkasan demo lokal. Tidak ada pembayaran atau aktivasi nyata."}</p>
+            {createdOrder && <p className="order-code"><strong>Kode pesanan: {createdOrder.order_code}</strong><br />Total: {money(createdOrder.total_idr)}<br />Pembayaran: Menunggu verifikasi admin</p>}
             <textarea readOnly value={requestSummary} rows={7} aria-label="Ringkasan permintaan" />
-            <button className="button button-primary form-submit" onClick={() => navigator.clipboard?.writeText(requestSummary)}>Salin ringkasan <Check size={17} /></button>
-            <button className="button button-secondary form-submit" onClick={() => setSelectedService(null)}>Selesai</button>
+            <button className="button button-primary form-submit" type="button" onClick={() => { void navigator.clipboard?.writeText(requestSummary); }}>Salin ringkasan <CheckCircle2 size={17} /></button>
+            <button className="button button-secondary form-submit" type="button" onClick={() => setSelectedService(null)}>Selesai</button>
           </div>}
         </section>
       </div>}
-      <a className="back-to-top" href="#" aria-label="Kembali ke atas"><ChevronDown size={18} /></a>
+      <a className="back-to-top" href="#home" aria-label="Kembali ke atas"><ChevronDown size={18} /></a>
     </main>
   );
 }
