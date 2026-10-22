@@ -75,7 +75,7 @@ export default function HomePage() {
       try {
         const response = await fetch(
           `${projectUrl}/rest/v1/products?select=id,name,description,category,price_idr,stock,is_active&is_active=eq.true&order=created_at.desc`,
-          { headers: { apikey: publicKey, Authorization: `Bearer ${publicKey}` } }
+          { headers: { apikey: publicKey } }
         );
         if (!response.ok) throw new Error("Katalog tidak dapat dimuat.");
         const rows = await response.json() as Array<{
@@ -155,7 +155,6 @@ export default function HomePage() {
           method: "POST",
           headers: {
             apikey: supabaseKey,
-            Authorization: `Bearer ${supabaseKey}`,
             "Content-Type": "application/json"
           },
           body: JSON.stringify({
