@@ -177,6 +177,26 @@ export default function AdminPage() {
     } finally { setBusy(false); }
   }
 
+  async function deleteProduct(product: Product) {
+    const confirmed = window.confirm(
+      `Hapus produk "${product.name}" secara permanen? Produk ini akan langsung hilang dari katalog toko. Pesanan lama tetap menyimpan ringkasan produknya.`
+    );
+    if (!confirmed) return;
+
+    setBusy(true);
+    setNotice("");
+    try {
+      await api(`products?id=eq.${encodeURIComponent(product.id)}`, { method: "DELETE" });
+      if (editing?.id === product.id) startNew();
+      await loadData();
+      setNotice(`Produk "${product.name}" berhasil dihapus dari katalog.`);
+    } catch (error) {
+      setNotice(error instanceof Error ? error.message : "Gagal menghapus produk. Periksa izin admin dan coba lagi.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
   async function adjustStock(product: Product, delta: number) {
     const nextStock = product.stock + delta;
     if (!Number.isInteger(nextStock) || nextStock < 0) {
@@ -245,7 +265,7 @@ export default function AdminPage() {
             <label style={{ ...labelStyle, display: "flex", flexDirection: "row", alignItems: "center", gap: 8 }}><input type="checkbox" checked={form.is_active} onChange={e => setForm({ ...form, is_active: e.target.checked })} /> Aktif di katalog</label>
             <div style={{ display: "flex", alignItems: "end", gap: 8 }}><button disabled={busy} style={buttonStyle}>{editing ? "Simpan perubahan" : "Tambah produk"}</button>{editing && <button type="button" onClick={startNew} style={secondaryButtonStyle}>Batal</button>}</div>
           </form>
-          <div style={{ overflowX: "auto", marginTop: 20 }}><table style={tableStyle}><thead><tr><th style={thStyle}>Foto</th><th style={thStyle}>Produk</th><th style={thStyle}>Harga</th><th style={thStyle}>Stok (− / +)</th><th style={thStyle}>Status</th><th style={thStyle}>Aksi</th></tr></thead><tbody>{products.map(p => <tr key={p.id}><td style={tdStyle}>{p.image_url ? <img src={p.image_url} alt={p.name} style={{ width: 64, height: 56, objectFit: "cover", borderRadius: 8 }} /> : <span style={{ color: "#8b91a3" }}>Belum ada</span>}</td><td style={tdStyle}><strong>{p.name}</strong><br /><small>{p.slug}</small></td><td style={tdStyle}>{money(p.price_idr)}</td><td style={tdStyle}><div style={{ display: "flex", alignItems: "center", gap: 7, minWidth: 150 }}><button type="button" aria-label={`Kurangi stok ${p.name}`} disabled={busy || p.stock <= 0} onClick={() => adjustStock(p, -1)} style={{ ...secondaryButtonStyle, padding: "6px 11px", minWidth: 34 }}>−</button><strong style={{ minWidth: 24, textAlign: "center" }}>{p.stock}</strong><button type="button" aria-label={`Tambah stok ${p.name}`} disabled={busy} onClick={() => adjustStock(p, 1)} style={{ ...secondaryButtonStyle, padding: "6px 11px", minWidth: 34 }}>+</button><button type="button" disabled={busy} onClick={() => startEdit(p)} style={{ ...secondaryButtonStyle, padding: "6px 9px" }}>Atur</button></div></td><td style={tdStyle}>{p.is_active ? "Aktif" : "Nonaktif"}</td><td style={tdStyle}><button onClick={() => startEdit(p)} style={secondaryButtonStyle}>Edit produk</button></td></tr>)}</tbody></table>{products.length === 0 && <p style={{ color: "#687087" }}>Belum ada produk atau akun ini belum memiliki izin membaca katalog.</p>}</div>
+          <div style={{ overflowX: "auto", marginTop: 20 }}><table style={tableStyle}><thead><tr><th style={thStyle}>Foto</th><th style={thStyle}>Produk</th><th style={thStyle}>Harga</th><th style={thStyle}>Stok (− / +)</th><th style={thStyle}>Status</th><th style={thStyle}>Aksi</th></tr></thead><tbody>{products.map(p => <tr key={p.id}><td style={tdStyle}>{p.image_url ? <img src={p.image_url} alt={p.name} style={{ width: 64, height: 56, objectFit: "cover", borderRadius: 8 }} /> : <span style={{ color: "#8b91a3" }}>Belum ada</span>}</td><td style={tdStyle}><strong>{p.name}</strong><br /><small>{p.slug}</small></td><td style={tdStyle}>{money(p.price_idr)}</td><td style={tdStyle}><div style={{ display: "flex", alignItems: "center", gap: 7, minWidth: 150 }}><button type="button" aria-label={`Kurangi stok ${p.name}`} disabled={busy || p.stock <= 0} onClick={() => adjustStock(p, -1)} style={{ ...secondaryButtonStyle, padding: "6px 11px", minWidth: 34 }}>−</button><strong style={{ minWidth: 24, textAlign: "center" }}>{p.stock}</strong><button type="button" aria-label={`Tambah stok ${p.name}`} disabled={busy} onClick={() => adjustStock(p, 1)} style={{ ...secondaryButtonStyle, padding: "6px 11px", minWidth: 34 }}>+</button><button type="button" disabled={busy} onClick={() => startEdit(p)} style={{ ...secondaryButtonStyle, padding: "6px 9px" }}>Atur</button></div></td><td style={tdStyle}>{p.is_active ? "Aktif" : "Nonaktif"}</td><td style={tdStyle}><div style={{ display: "flex", alignItems: "center", gap: 7, flexWrap: "wrap" }}><button type="button" disabled={busy} onClick={() => startEdit(p)} style={secondaryButtonStyle}>Edit produk</button><button type="button" disabled={busy} onClick={() => deleteProduct(p)} style={dangerButtonStyle}>Hapus</button></div></td></tr>)}</tbody></table>{products.length === 0 && <p style={{ color: "#687087" }}>Belum ada produk atau akun ini belum memiliki izin membaca katalog.</p>}</div>
         </section>
         <section style={panelStyle}>
           <h2 style={{ marginTop: 0 }}>Pesanan terbaru</h2>
@@ -261,6 +281,7 @@ export default function AdminPage() {
 const inputStyle: React.CSSProperties = { display: "block", width: "100%", marginTop: 6, padding: "11px 12px", border: "1px solid #dfe2ec", borderRadius: 9, background: "white", color: "#10162a" };
 const buttonStyle: React.CSSProperties = { padding: "12px 16px", marginTop: 16, border: 0, borderRadius: 9, background: "#5c5de8", color: "white", fontWeight: 800, cursor: "pointer" };
 const secondaryButtonStyle: React.CSSProperties = { padding: "8px 12px", border: "1px solid #dfe2ec", borderRadius: 8, background: "white", color: "#10162a", fontWeight: 700, cursor: "pointer" };
+const dangerButtonStyle: React.CSSProperties = { padding: "8px 12px", border: "1px solid #fecaca", borderRadius: 8, background: "#fff1f2", color: "#be123c", fontWeight: 800, cursor: "pointer" };
 const panelStyle: React.CSSProperties = { background: "white", padding: 20, borderRadius: 18, border: "1px solid #e8eaf1", marginBottom: 18 };
 const labelStyle: React.CSSProperties = { display: "block", fontWeight: 700, fontSize: 13 };
 const tableStyle: React.CSSProperties = { width: "100%", borderCollapse: "collapse", textAlign: "left" };
