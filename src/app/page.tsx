@@ -341,7 +341,7 @@ export default function HomePage() {
 
       <footer className="site-footer"><div className="container">
         <div className="footer-top"><a className="footer-brand" href="#home"><Image src="/primehub/primehub-logo.svg" alt="PrimeHub" width={140} height={40} /></a><p>Premium Services. Better Life.</p><a className="footer-link" href="#layanan">Kembali ke katalog <ArrowRight size={15} /></a></div>
-        <div className="footer-bottom"><span>© {new Date().getFullYear()} PrimeHub.</span><span>Prototype demo — bukan toko aktif atau klaim kemitraan resmi.</span></div>
+        <div className="footer-bottom"><span>© {new Date().getFullYear()} PrimeHub.</span><span>Informasi produk pihak ketiga perlu dibaca sebelum memesan.</span><span className="footer-legal-links"><a href="/primehub/kebijakan-privasi/">Kebijakan Privasi</a><a href="/primehub/pengembalian-dana/">Pengembalian Dana</a></span></div>
       </div></footer>
 
       {selectedService && <div className="modal-backdrop" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) setSelectedService(null); }}>
@@ -358,6 +358,7 @@ export default function HomePage() {
               <label>Nama<input required maxLength={90} value={customerName} onChange={(event) => setCustomerName(event.target.value)} placeholder="Nama kamu" /></label>
               <label>Email atau WhatsApp<input required maxLength={150} value={customerContact} onChange={(event) => setCustomerContact(event.target.value)} placeholder="Kontak yang bisa dihubungi" /></label>
               <label>Catatan (opsional)<textarea maxLength={300} value={customerNote} onChange={(event) => setCustomerNote(event.target.value)} placeholder="Pertanyaan atau paket yang ingin dikonfirmasi" rows={3} /></label>
+              <label className="policy-consent"><input type="checkbox" required /> <span>Saya telah membaca <a href="/primehub/kebijakan-privasi/" target="_blank" rel="noreferrer">Kebijakan Privasi</a> dan <a href="/primehub/pengembalian-dana/" target="_blank" rel="noreferrer">Kebijakan Pengembalian Dana</a>.</span></label>
               {requestError && <p className="form-error" role="alert">{requestError}</p>}<button type="submit" className="button button-primary form-submit" disabled={submitting}>{submitting ? "Memproses…" : selectedService.productId ? "Buat pesanan" : "Buat ringkasan demo"} <ArrowRight size={17} /></button>
             </form>
           </> : <div className="request-summary">
