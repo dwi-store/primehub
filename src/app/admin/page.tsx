@@ -13,6 +13,7 @@ type Product = {
   name: string;
   description: string;
   category: string;
+  image_url: string | null;
   price_idr: number;
   stock: number;
   is_active: boolean;
@@ -40,7 +41,8 @@ export default function AdminPage() {
   const [notice, setNotice] = useState("");
   const [busy, setBusy] = useState(false);
   const [editing, setEditing] = useState<Product | null>(null);
-  const [form, setForm] = useState({ slug: "", name: "", description: "", category: "Produktivitas", price_idr: "0", stock: "0", is_active: true });
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [form, setForm] = useState({ slug: "", name: "", description: "", category: "Produktivitas", image_url: "", price_idr: "0", stock: "0", is_active: true });
 
   const configured = Boolean(supabaseUrl && supabaseKey);
 
@@ -136,18 +138,35 @@ export default function AdminPage() {
 
   function startNew() {
     setEditing(null);
-    setForm({ slug: "", name: "", description: "", category: "Produktivitas", price_idr: "0", stock: "0", is_active: true });
+    setForm({ slug: "", name: "", description: "", category: "Produktivitas", image_url: "", price_idr: "0", stock: "0", is_active: true });
+    setImageFile(null);
   }
 
   function startEdit(product: Product) {
     setEditing(product);
-    setForm({ slug: product.slug, name: product.name, description: product.description, category: product.category, price_idr: String(product.price_idr), stock: String(product.stock), is_active: product.is_active });
+    setForm({ slug: product.slug, name: product.name, description: product.description, category: product.category, image_url: product.image_url || "", price_idr: String(product.price_idr), stock: String(product.stock), is_active: product.is_active });
+    setImageFile(null);
   }
 
   async function saveProduct(event: FormEvent) {
     event.preventDefault(); setBusy(true); setNotice("");
     try {
-      const payload = { ...form, price_idr: Number(form.price_idr), stock: Number(form.stock), updated_at: new Date().toISOString() };
+      if (!supabaseUrl || !supabaseKey) throw new Error("Konfigurasi Supabase belum tersedia.");
+      let imageUrl = form.image_url;
+      if (imageFile) {
+        if (!imageFile.type.startsWith("image/")) throw new Error("Pilih file gambar.");
+        if (imageFile.size > 5 * 1024 * 1024) throw new Error("Ukuran foto maksimal 5 MB.");
+        const extension = imageFile.name.split(".").pop()?.toLowerCase().replace(/[^a-z0-9]/g, "") || "jpg";
+        const objectPath = `${crypto.randomUUID()}.${extension}`;
+        const upload = await fetch(`${supabaseUrl}/storage/v1/object/product-images/${objectPath}`, {
+          method: "POST",
+          headers: { apikey: supabaseKey, Authorization: `Bearer ${token}`, "Content-Type": imageFile.type, "x-upsert": "true" },
+          body: imageFile
+        });
+        if (!upload.ok) throw new Error("Foto gagal diunggah: " + (await upload.text()));
+        imageUrl = `${supabaseUrl}/storage/v1/object/public/product-images/${objectPath}`;
+      }
+      const payload = { ...form, image_url: imageUrl || null, price_idr: Number(form.price_idr), stock: Number(form.stock), updated_at: new Date().toISOString() };
       if (editing) await api(`products?id=eq.${editing.id}`, { method: "PATCH", body: JSON.stringify(payload) });
       else await api("products", { method: "POST", body: JSON.stringify(payload) });
       await loadData();
@@ -222,10 +241,11 @@ export default function AdminPage() {
             <label style={labelStyle}>Harga (IDR)<input required type="number" min="0" step="1" value={form.price_idr} onChange={e => setForm({ ...form, price_idr: e.target.value })} style={inputStyle} /></label>
             <label style={labelStyle}>Stok<input required type="number" min="0" step="1" value={form.stock} onChange={e => setForm({ ...form, stock: e.target.value })} style={inputStyle} /></label>
             <label style={labelStyle}>Deskripsi<input value={form.description} onChange={e => setForm({ ...form, description: e.target.value })} style={inputStyle} /></label>
+            <label style={labelStyle}>Foto produk (JPG, PNG, WebP, GIF · maks. 5 MB)<input type="file" accept="image/jpeg,image/png,image/webp,image/gif" onChange={e => setImageFile(e.target.files?.[0] || null)} style={{ ...inputStyle, padding: 8 }} />{imageFile && <small style={{ display: "block", marginTop: 6 }}>{imageFile.name}</small>}{!imageFile && form.image_url && <img src={form.image_url} alt="Foto produk saat ini" style={{ display: "block", marginTop: 8, width: 100, height: 76, objectFit: "cover", borderRadius: 8 }} />}</label>
             <label style={{ ...labelStyle, display: "flex", flexDirection: "row", alignItems: "center", gap: 8 }}><input type="checkbox" checked={form.is_active} onChange={e => setForm({ ...form, is_active: e.target.checked })} /> Aktif di katalog</label>
             <div style={{ display: "flex", alignItems: "end", gap: 8 }}><button disabled={busy} style={buttonStyle}>{editing ? "Simpan perubahan" : "Tambah produk"}</button>{editing && <button type="button" onClick={startNew} style={secondaryButtonStyle}>Batal</button>}</div>
           </form>
-          <div style={{ overflowX: "auto", marginTop: 20 }}><table style={tableStyle}><thead><tr><th style={thStyle}>Produk</th><th style={thStyle}>Harga</th><th style={thStyle}>Stok (− / +)</th><th style={thStyle}>Status</th><th style={thStyle}>Aksi</th></tr></thead><tbody>{products.map(p => <tr key={p.id}><td style={tdStyle}><strong>{p.name}</strong><br /><small>{p.slug}</small></td><td style={tdStyle}>{money(p.price_idr)}</td><td style={tdStyle}><div style={{ display: "flex", alignItems: "center", gap: 7, minWidth: 150 }}><button type="button" aria-label={`Kurangi stok ${p.name}`} disabled={busy || p.stock <= 0} onClick={() => adjustStock(p, -1)} style={{ ...secondaryButtonStyle, padding: "6px 11px", minWidth: 34 }}>−</button><strong style={{ minWidth: 24, textAlign: "center" }}>{p.stock}</strong><button type="button" aria-label={`Tambah stok ${p.name}`} disabled={busy} onClick={() => adjustStock(p, 1)} style={{ ...secondaryButtonStyle, padding: "6px 11px", minWidth: 34 }}>+</button><button type="button" disabled={busy} onClick={() => startEdit(p)} style={{ ...secondaryButtonStyle, padding: "6px 9px" }}>Atur</button></div></td><td style={tdStyle}>{p.is_active ? "Aktif" : "Nonaktif"}</td><td style={tdStyle}><button onClick={() => startEdit(p)} style={secondaryButtonStyle}>Edit produk</button></td></tr>)}</tbody></table>{products.length === 0 && <p style={{ color: "#687087" }}>Belum ada produk atau akun ini belum memiliki izin membaca katalog.</p>}</div>
+          <div style={{ overflowX: "auto", marginTop: 20 }}><table style={tableStyle}><thead><tr><th style={thStyle}>Foto</th><th style={thStyle}>Produk</th><th style={thStyle}>Harga</th><th style={thStyle}>Stok (− / +)</th><th style={thStyle}>Status</th><th style={thStyle}>Aksi</th></tr></thead><tbody>{products.map(p => <tr key={p.id}><td style={tdStyle}>{p.image_url ? <img src={p.image_url} alt={p.name} style={{ width: 64, height: 56, objectFit: "cover", borderRadius: 8 }} /> : <span style={{ color: "#8b91a3" }}>Belum ada</span>}</td><td style={tdStyle}><strong>{p.name}</strong><br /><small>{p.slug}</small></td><td style={tdStyle}>{money(p.price_idr)}</td><td style={tdStyle}><div style={{ display: "flex", alignItems: "center", gap: 7, minWidth: 150 }}><button type="button" aria-label={`Kurangi stok ${p.name}`} disabled={busy || p.stock <= 0} onClick={() => adjustStock(p, -1)} style={{ ...secondaryButtonStyle, padding: "6px 11px", minWidth: 34 }}>−</button><strong style={{ minWidth: 24, textAlign: "center" }}>{p.stock}</strong><button type="button" aria-label={`Tambah stok ${p.name}`} disabled={busy} onClick={() => adjustStock(p, 1)} style={{ ...secondaryButtonStyle, padding: "6px 11px", minWidth: 34 }}>+</button><button type="button" disabled={busy} onClick={() => startEdit(p)} style={{ ...secondaryButtonStyle, padding: "6px 9px" }}>Atur</button></div></td><td style={tdStyle}>{p.is_active ? "Aktif" : "Nonaktif"}</td><td style={tdStyle}><button onClick={() => startEdit(p)} style={secondaryButtonStyle}>Edit produk</button></td></tr>)}</tbody></table>{products.length === 0 && <p style={{ color: "#687087" }}>Belum ada produk atau akun ini belum memiliki izin membaca katalog.</p>}</div>
         </section>
         <section style={panelStyle}>
           <h2 style={{ marginTop: 0 }}>Pesanan terbaru</h2>
