@@ -32,7 +32,6 @@ type Order = {
 
 export default function AdminPage() {
   const [email, setEmail] = useState("");
-  const [authMode, setAuthMode] = useState<"signin" | "signup">("signin");
   const [password, setPassword] = useState("");
   const [token, setToken] = useState("");
   const [userId, setUserId] = useState("");
@@ -142,13 +141,9 @@ export default function AdminPage() {
       if (!supabaseUrl || !supabaseKey) {
         throw new Error("Konfigurasi Supabase belum tersedia saat build situs.");
       }
-      const isSignup = authMode === "signup";
-      const endpoint = isSignup
-        ? supabaseUrl + "/auth/v1/signup"
-        : supabaseUrl + "/auth/v1/token?grant_type=password";
-      const payload = isSignup
-        ? { email, password, data: { display_name: email.split("@")[0] } }
-        : { email, password };
+      const endpoint = supabaseUrl + "/auth/v1/token?grant_type=password";
+      // Mobile keyboards/autofill can add spaces or alter email casing; normalize email only.
+      const payload = { email: email.trim().toLowerCase(), password };
       const response = await fetch(endpoint, {
         method: "POST",
         headers: { apikey: supabaseKey, "Content-Type": "application/json" },
@@ -156,14 +151,14 @@ export default function AdminPage() {
       });
       const data = await response.json().catch(() => ({}));
       if (!response.ok) {
-        throw new Error(data.msg || data.message || data.error_description || (isSignup ? "Pendaftaran gagal." : "Login gagal."));
-      }
-
-      if (isSignup) {
-        setPassword("");
-        setAuthMode("signin");
-        setNotice("Pendaftaran diproses. Periksa email untuk konfirmasi bila diminta. Akun baru tidak otomatis menjadi admin; hak admin hanya diaktifkan oleh pemilik proyek.");
-        return;
+        const errorText = String(data.msg || data.message || data.error_description || data.error || "");
+        if (/email not confirmed/i.test(errorText) || data.code === "email_not_confirmed") {
+          throw new Error("Email belum dikonfirmasi. Gunakan email admin yang sudah aktif; akun baru tidak otomatis menjadi admin.");
+        }
+        if (/invalid login credentials/i.test(errorText) || data.code === "invalid_credentials") {
+          throw new Error("Email atau sandi tidak cocok. Periksa ejaan email, lalu gunakan akun admin yang sama dengan di laptop.");
+        }
+        throw new Error(errorText || "Login gagal. Periksa email dan sandi.");
       }
 
       if (!data.access_token || !data.user?.id) throw new Error("Respons login tidak lengkap.");
@@ -402,11 +397,11 @@ export default function AdminPage() {
 
       {!token ? <form onSubmit={signIn} style={{ background: "white", padding: 24, borderRadius: 18, border: "1px solid #e8eaf1", maxWidth: 480 }}>
         <h2 style={{ marginTop: 0 }}>Login admin</h2>
-        <p style={{ color: "#687087", lineHeight: 1.6 }}>{authMode === "signup" ? "Daftar dengan email milikmu. Akun baru tetap non-admin sampai pemilik proyek mengaktifkannya." : "Masuk memakai akun yang sudah diberi hak admin PrimeHub."}</p>
+        <p style={{ color: "#687087", lineHeight: 1.6 }}>Masuk memakai akun admin PrimeHub yang sama dengan di laptop. Akun baru tidak bisa menjadi admin melalui halaman ini.</p>
         {!configured && <p style={{ background: "#fff4db", padding: 12, borderRadius: 10 }}>Supabase belum dikonfigurasi pada frontend. Panel tidak akan tersambung sampai URL proyek dan anon key publik ditambahkan sebagai environment variables saat build.</p>}
-        <label style={{ display: "block", fontWeight: 700, marginTop: 14 }}>Email<input required type="email" value={email} onChange={e => setEmail(e.target.value)} style={inputStyle} /></label>
-        <label style={{ display: "block", fontWeight: 700, marginTop: 14 }}>Password<input required minLength={authMode === "signup" ? 8 : undefined} type="password" value={password} onChange={e => setPassword(e.target.value)} style={inputStyle} /></label>
-        <button disabled={busy || !configured} style={buttonStyle}>{busy ? "Memproses…" : authMode === "signup" ? "Daftar akun" : "Login admin"}</button><button type="button" disabled={busy || !configured} onClick={() => { setAuthMode(authMode === "signin" ? "signup" : "signin"); setNotice(""); }} style={{ ...secondaryButtonStyle, display: "block", width: "100%", marginTop: 12 }}>{authMode === "signin" ? "Belum punya akun? Daftar" : "Sudah punya akun? Login"}</button>
+        <label style={{ display: "block", fontWeight: 700, marginTop: 14 }}>Email<input required type="email" inputMode="email" autoCapitalize="none" autoCorrect="off" spellCheck={false} autoComplete="username" value={email} onChange={e => setEmail(e.target.value)} style={inputStyle} /></label>{email.trim().toLowerCase().endsWith("@gmai.com") && <p role="status" style={{ color: "#b45309", background: "#fff7ed", border: "1px solid #fed7aa", borderRadius: 9, padding: 10, fontSize: 12, lineHeight: 1.5 }}>Periksa ejaan email: alamat ini berakhiran @gmai.com. Jika memakai Gmail biasa, domainnya biasanya @gmail.com.</p>}
+        <label style={{ display: "block", fontWeight: 700, marginTop: 14 }}>Password<input required type="password" autoComplete="current-password" value={password} onChange={e => setPassword(e.target.value)} style={inputStyle} /></label>
+        <button disabled={busy || !configured} style={buttonStyle}>{busy ? "Memproses…" : "Login admin"}</button>
       </form> : <>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12, flexWrap: "wrap", marginBottom: 20 }}>
           <div><span style={{ color: "#687087", fontSize: 13, display: "block" }}>Sesi aktif · {userId}</span><small style={{ color: "#687087" }}>Pemeriksaan pesanan otomatis setiap 12 detik saat panel ini terbuka.</small></div>
