@@ -12,6 +12,9 @@ import {
   Search,
   ShieldCheck,
   Sparkles,
+  Sun,
+  Moon,
+  Monitor,
   X
 } from "lucide-react";
 
@@ -76,8 +79,40 @@ const fallbackCatalogServices: Service[] = [
   }
 ];
 
+type ThemeMode = "light" | "dark" | "system";
+
 export default function HomePage() {
+  const [themeMode, setThemeMode] = useState<ThemeMode>("system");
   const [activeCategory, setActiveCategory] = useState("Semua");
+
+  useEffect(() => {
+    const saved = window.localStorage.getItem("upprime-theme");
+    if (saved === "light" || saved === "dark" || saved === "system") {
+      setThemeMode(saved);
+    }
+  }, []);
+
+  useEffect(() => {
+    const root = document.documentElement;
+    const media = window.matchMedia("(prefers-color-scheme: light)");
+    const applyTheme = () => {
+      root.dataset.theme = themeMode === "system" ? (media.matches ? "light" : "dark") : themeMode;
+    };
+    applyTheme();
+    if (themeMode === "system") {
+      media.addEventListener("change", applyTheme);
+      return () => media.removeEventListener("change", applyTheme);
+    }
+  }, [themeMode]);
+
+  function cycleTheme() {
+    const next: ThemeMode = themeMode === "light" ? "dark" : themeMode === "dark" ? "system" : "light";
+    window.localStorage.setItem("upprime-theme", next);
+    setThemeMode(next);
+  }
+
+  const themeLabel = themeMode === "system" ? "Sistem" : themeMode === "light" ? "Siang" : "Malam";
+  const ThemeIcon = themeMode === "system" ? Monitor : themeMode === "light" ? Sun : Moon;
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedService, setSelectedService] = useState<Service | null>(null);
   const [modalMode, setModalMode] = useState<"detail" | "order">("detail");
@@ -253,7 +288,12 @@ export default function HomePage() {
           <nav className="nav-links" aria-label="Navigasi utama">
             <a href="#home">Beranda</a><a href="#layanan">Katalog Premium</a><a href="#cara-pesan">Cara Pesan</a><a href="#bantuan">Bantuan</a><a href="/upprime/syarat-ketentuan/">Syarat Layanan</a><a href="/upprime/pengembalian-dana/">Garansi & Refund</a>
           </nav>
-          <div className="header-actions"><a className="button button-primary" href="#layanan">Jelajahi <ArrowRight size={16} /></a></div>
+          <div className="header-actions">
+            <button className="button button-secondary theme-toggle" type="button" onClick={cycleTheme} title={`Tema saat ini: ${themeLabel}. Klik untuk mengganti tema.`} aria-label={`Tema ${themeLabel}. Klik untuk mengganti tema.`}>
+              <ThemeIcon size={16} aria-hidden="true" /><span>{themeLabel}</span>
+            </button>
+            <a className="button button-primary" href="#layanan">Jelajahi <ArrowRight size={16} /></a>
+          </div>
         </div>
       </header>
 
