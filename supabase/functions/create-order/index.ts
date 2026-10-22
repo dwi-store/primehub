@@ -35,6 +35,85 @@ async function fingerprintClient(clientIp: string, secret: string): Promise<stri
   return Array.from(new Uint8Array(signature), (byte) => byte.toString(16).padStart(2, "0")).join("");
 }
 
+type WhatsAppOrderNotification = {
+  orderCode: string;
+  customerName: string;
+  customerContact: string;
+  totalIdr: number;
+};
+
+function formatIdr(value: number): string {
+  return new Intl.NumberFormat("id-ID", {
+    style: "currency",
+    currency: "IDR",
+    maximumFractionDigits: 0,
+  }).format(value);
+}
+
+// Uses an approved WhatsApp Business template so the business can receive
+// order alerts outside a customer-initiated 24-hour conversation window.
+async function notifyAdminOnWhatsApp(order: WhatsAppOrderNotification): Promise<"sent" | "not_configured" | "failed"> {
+  const accessToken = Deno.env.get("WHATSAPP_ACCESS_TOKEN")?.trim();
+  const phoneNumberId = Deno.env.get("WHATSAPP_PHONE_NUMBER_ID")?.trim();
+  const recipient = Deno.env.get("WHATSAPP_ADMIN_RECIPIENT")?.replace(/\\D/g, "");
+  const templateName = Deno.env.get("WHATSAPP_ORDER_TEMPLATE")?.trim() || "primehub_order_alert";
+  const languageCode = Deno.env.get("WHATSAPP_TEMPLATE_LANGUAGE")?.trim() || "id";
+  const apiVersion = Deno.env.get("WHATSAPP_GRAPH_API_VERSION")?.trim() || "v26.0";
+
+  if (!accessToken || !phoneNumberId || !recipient) return "not_configured";
+  if (!/^\\d{8,15}$/.test(recipient) || !/^v\\d+\\.0$/.test(apiVersion) || !/^[a-z0-9_]{1,512}$/i.test(templateName)) {
+    console.error("WhatsApp order notification configuration is invalid.");
+    return "failed";
+  }
+
+  try {
+    const response = await fetch(`https://graph.facebook.com/${apiVersion}/${encodeURIComponent(phoneNumberId)}/messages`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        messaging_product: "whatsapp",
+        recipient_type: "individual",
+        to: recipient,
+        type: "template",
+        template: {
+          name: templateName,
+          language: { code: languageCode },
+          components: [{
+            type: "body",
+            parameters: [
+              { type: "text", text: order.orderCode },
+              { type: "text", text: order.customerName },
+              { type: "text", text: order.customerContact },
+              { type: "text", text: formatIdr(order.totalIdr) },
+            ],
+          }],
+        },
+      }),
+      signal: AbortSignal.timeout(8000),
+    });
+
+    if (!response.ok) {
+      // Deliberately do not log the access token, recipient, or customer information.
+      let errorCode = "unknown";
+      try {
+        const payload = await response.json();
+        errorCode = String(payload?.error?.code ?? payload?.error?.type ?? "unknown");
+      } catch {
+        // Ignore response bodies that are not valid JSON.
+      }
+      console.error("WhatsApp order notification failed:", response.status, errorCode);
+      return "failed";
+    }
+    return "sent";
+  } catch (error) {
+    console.error("WhatsApp order notification request failed:", error instanceof Error ? error.name : "unknown");
+    return "failed";
+  }
+}
+
 Deno.serve(async (req: Request) => {
   const origin = req.headers.get("origin");
   if (origin && !allowedOrigins.has(origin)) {
@@ -122,7 +201,13 @@ Deno.serve(async (req: Request) => {
         : "Pesanan belum dapat dibuat";
       return reply(req, { error: safeMessage }, 400);
     }
-    return reply(req, { order: data }, 201);
+    const notification = await notifyAdminOnWhatsApp({
+      orderCode: String(data?.order_code ?? ""),
+      customerName,
+      customerContact,
+      totalIdr: Number(data?.total_idr ?? 0),
+    });
+    return reply(req, { order: data, notification }, 201);
   } catch (error) {
     console.error("Unexpected create-order failure:", error);
     return reply(req, { error: "Terjadi kesalahan saat membuat pesanan." }, 500);
