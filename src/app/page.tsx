@@ -80,6 +80,7 @@ export default function HomePage() {
           const style = categoryLower.includes("ai") ? { icon: "✦", tone: "violet" }
             : categoryLower.includes("musik") || categoryLower.includes("music") || categoryLower.includes("hiburan") ? { icon: "🎵", tone: "green" }
             : categoryLower.includes("desain") || categoryLower.includes("kreat") ? { icon: "🎨", tone: "pink" }
+            : categoryLower.includes("video") || categoryLower.includes("editing") ? { icon: "🎬", tone: "green" }
             : categoryLower.includes("cloud") || categoryLower.includes("storage") ? { icon: "☁️", tone: "blue" }
             : { icon: "✦", tone: "violet" };
           const price = Number(product.price_idr);
