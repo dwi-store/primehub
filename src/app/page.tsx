@@ -9,12 +9,10 @@ import {
   ChevronDown,
   CircleHelp,
   Clock3,
-  Headphones,
   Search,
   ShieldCheck,
   Sparkles,
-  X,
-  Zap
+  X
 } from "lucide-react";
 
 type Service = {
@@ -59,7 +57,8 @@ export default function HomePage() {
   const [catalogStatus, setCatalogStatus] = useState<"unconfigured" | "loading" | "live" | "error">(supabase ? "loading" : "unconfigured");
 
   useEffect(() => {
-    if (!supabase) return;
+    const client = supabase;
+    if (!client) return;
     let cancelled = false;
     let refreshInProgress = false;
     let hasLoadedSuccessfully = false;
@@ -68,7 +67,7 @@ export default function HomePage() {
       if (cancelled || refreshInProgress) return;
       refreshInProgress = true;
       try {
-        const { data, error } = await supabase
+        const { data, error } = await client
           .from("products")
           .select("id,name,description,category,image_url,price_idr,stock,is_active,created_at")
           .eq("is_active", true)
@@ -110,7 +109,7 @@ export default function HomePage() {
 
     // Fetch on open, then keep an already-open shop synchronized with admin edits.
     void loadCatalog();
-    const channel = supabase
+    const channel = client
       .channel("primehub-storefront-products")
       .on("postgres_changes", { event: "*", schema: "public", table: "products" }, () => {
         void loadCatalog();
@@ -124,7 +123,7 @@ export default function HomePage() {
       cancelled = true;
       window.clearInterval(backupRefresh);
       window.removeEventListener("focus", onFocus);
-      void supabase.removeChannel(channel);
+      void client.removeChannel(channel);
     };
   }, []);
 
