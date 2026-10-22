@@ -214,3 +214,9 @@ button:disabled { opacity: .55; cursor: not-allowed; }
 .legal-actions { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 22px; }
 .legal-document a:not(.button) { text-decoration: underline; text-underline-offset: 3px; }
 @media (max-width: 600px) { .legal-document { padding-top: 30px; padding-bottom: 44px; } .legal-document h2 { font-size: 18px; } }
+
+.footer-legal-links { display: inline-flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+.footer-legal-links a { text-decoration: underline; text-underline-offset: 3px; color: #dbe1f3; }
+.policy-consent { display: flex !important; align-items: flex-start; grid-template-columns: none; gap: 9px !important; font-size: 12px !important; color: var(--muted) !important; line-height: 1.6; }
+.policy-consent input[type="checkbox"] { flex: 0 0 auto; width: 16px; min-width: 16px; height: 16px; margin: 3px 0 0; accent-color: var(--blue); }
+.policy-consent a { color: #c8caff; text-decoration: underline; text-underline-offset: 3px; }
