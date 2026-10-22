@@ -36,18 +36,6 @@ type Service = {
   image_url?: string | null;
 };
 
-const demoServices: Service[] = [
-  { id: "design", name: "Design Plus", app: "Design Suite", category: "Desain", description: "Fitur desain dan aset premium untuk kebutuhan kreatif.", price: "Rp29.000", price_idr: 29000, duration: "1 bulan", icon: "🎨", methodLabel: "Undangan tim", eta: "Estimasi contoh: 1–24 jam", tone: "violet", featured: true },
-  { id: "music", name: "Music Premium", app: "Music", category: "Musik", description: "Pengalaman musik dengan fitur premium.", price: "Rp19.000", price_idr: 19000, duration: "1 bulan", icon: "🎵", methodLabel: "Voucher/kode", eta: "Setelah kode tersedia (contoh)", tone: "green" },
-  { id: "cloud", name: "Cloud Extra", app: "Cloud Storage", category: "Cloud", description: "Tambahan kapasitas untuk file dan dokumen.", price: "Rp25.000", price_idr: 25000, duration: "1 bulan", icon: "☁️", methodLabel: "Email akun", eta: "Estimasi contoh: 1–24 jam", tone: "blue" },
-  { id: "work", name: "Work Pro", app: "Productivity Suite", category: "Produktivitas", description: "Fitur produktivitas dan kolaborasi.", price: "Rp39.000", price_idr: 39000, duration: "1 bulan", icon: "🗂️", methodLabel: "Undangan tim", eta: "Estimasi contoh: 1–24 jam", tone: "orange" },
-  { id: "learn", name: "Learn Plus", app: "Learning Platform", category: "Belajar", description: "Paket belajar premium untuk mendukung proses belajar.", price: "Rp49.000", price_idr: 49000, duration: "3 bulan", icon: "📚", methodLabel: "Metode resmi lain", eta: "Mengikuti instruksi (contoh)", tone: "yellow" },
-  { id: "edit", name: "Edit Studio", app: "Video Editor", category: "Editing", description: "Fitur tambahan untuk kebutuhan editing video.", price: "Rp32.000", price_idr: 32000, duration: "1 bulan", icon: "🎬", methodLabel: "Voucher/kode", eta: "Setelah kode tersedia (contoh)", tone: "pink" },
-  { id: "ai", name: "AI Assist", app: "AI Tools", category: "AI", description: "Paket fitur AI tambahan sesuai ketentuan penyedia.", price: "Rp59.000", price_idr: 59000, duration: "1 bulan", icon: "✦", methodLabel: "Email akun", eta: "Estimasi contoh: 1–24 jam", tone: "violet" },
-  { id: "design-year", name: "Design Plus Tahunan", app: "Design Suite", category: "Desain", description: "Contoh paket tahunan untuk kebutuhan desain.", price: "Rp249.000", price_idr: 249000, duration: "12 bulan", icon: "🖌️", methodLabel: "Undangan tim", eta: "Estimasi contoh: 1–24 jam", tone: "violet" },
-  { id: "cloud-year", name: "Cloud Extra Tahunan", app: "Cloud Storage", category: "Cloud", description: "Contoh paket cloud jangka panjang.", price: "Rp249.000", price_idr: 249000, duration: "12 bulan", icon: "🗃️", methodLabel: "Voucher/kode", eta: "Setelah kode tersedia (contoh)", tone: "blue" },
-  { id: "music-year", name: "Music Premium Tahunan", app: "Music", category: "Musik", description: "Contoh paket musik jangka panjang.", price: "Rp199.000", price_idr: 199000, duration: "12 bulan", icon: "🎧", methodLabel: "Voucher/kode", eta: "Setelah kode tersedia (contoh)", tone: "green" }
-];
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL?.replace(/\/$/, "");
 const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
@@ -67,8 +55,8 @@ export default function HomePage() {
   const [requestError, setRequestError] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [createdOrder, setCreatedOrder] = useState<{ order_code: string; total_idr: number } | null>(null);
-  const [catalogServices, setCatalogServices] = useState<Service[]>(supabaseUrl && supabaseKey ? [] : demoServices);
-  const [catalogStatus, setCatalogStatus] = useState<"demo" | "loading" | "live" | "error">(supabaseUrl && supabaseKey ? "loading" : "demo");
+  const [catalogServices, setCatalogServices] = useState<Service[]>([]);
+  const [catalogStatus, setCatalogStatus] = useState<"unconfigured" | "loading" | "live" | "error">(supabase ? "loading" : "unconfigured");
 
   useEffect(() => {
     if (!supabase) return;
@@ -243,11 +231,17 @@ export default function HomePage() {
             <div className="trust-row"><span>✓ Metode transparan</span><span>✓ Status jelas</span><span>✓ Tanpa password/OTP</span></div>
           </div>
           <div className="hero-preview">
-            <div className="preview-head"><div><strong>Pilihan Premium</strong><small>Pratinjau katalog</small></div>{catalogStatus !== "live" && <span className="demo-tag">DEMO</span>}</div>
-            <div className="preview-item"><span className="preview-icon">🎨</span><span><b>Design Plus</b><small>Desain kreatif</small></span><strong className="preview-price">Rp29 rb</strong></div>
-            <div className="preview-item"><span className="preview-icon">🎵</span><span><b>Music Premium</b><small>Musik &amp; audio</small></span><strong className="preview-price">Rp19 rb</strong></div>
-            <div className="preview-item"><span className="preview-icon">☁️</span><span><b>Cloud Extra</b><small>Penyimpanan cloud</small></span><strong className="preview-price">Rp25 rb</strong></div>
-            <p className="preview-note">Harga pada pratinjau hanya contoh.</p>
+            <div className="preview-head">
+              <div><strong>Produk dari Admin</strong><small>{catalogStatus === "live" ? "Terhubung ke katalog toko" : catalogStatus === "loading" ? "Memuat katalog…" : catalogStatus === "error" ? "Koneksi katalog bermasalah" : "Katalog belum terhubung"}</small></div>
+              {catalogStatus === "live" && <span className="live-tag">LIVE</span>}
+            </div>
+            {catalogServices.slice(0, 3).map((service) => <div className="preview-item" key={service.id}>
+              <span className="preview-icon">{service.image_url ? <img src={service.image_url} alt="" loading="lazy" /> : service.icon}</span>
+              <span className="preview-product-name"><b>{service.name}</b><small>{service.category} · {service.duration}</small></span>
+              <strong className="preview-price">{service.price}</strong>
+            </div>)}
+            {catalogServices.length === 0 && <p className="preview-empty">{catalogStatus === "loading" ? "Mengambil produk yang diunggah dari panel admin…" : catalogStatus === "error" ? "Produk belum dapat dimuat. Coba buka ulang halaman." : "Belum ada produk aktif. Produk yang disimpan di panel admin akan muncul di sini."}</p>}
+            <p className="preview-note">Daftar ini tersambung ke produk aktif di panel admin.</p>
           </div>
         </div>
       </section>
@@ -255,8 +249,8 @@ export default function HomePage() {
       <section className="catalog section-wrap" id="layanan">
         <div className="container">
           <div className="section-heading"><div><span className="eyebrow">KATALOG PREMIUM</span><h2>Temukan paket yang cocok<span>.</span></h2><p>Cari aplikasi, pilih kategori, lalu lihat detail metode aktivasi setiap paket.</p></div><span className="catalog-count">{filteredServices.length.toString().padStart(2, "0")} PAKET</span></div>
-          <div className={catalogStatus === "demo" ? "notice demo-notice" : "notice"}>
-            {catalogStatus === "live" ? "Katalog dimuat dari backend. Periksa detail paket sebelum membuat pesanan." : catalogStatus === "loading" ? "Memuat katalog PrimeHub…" : catalogStatus === "error" ? "Katalog backend belum bisa dimuat. Periksa konfigurasi Supabase." : "Mode demo: harga dan paket adalah contoh. Pembayaran dan aktivasi nyata belum tersedia."}
+          <div className="notice">
+            {catalogStatus === "live" ? "Produk aktif berasal langsung dari panel admin. Tambah atau ubah produk di admin, lalu perubahan akan muncul otomatis di katalog." : catalogStatus === "loading" ? "Memuat produk yang tersimpan di panel admin…" : catalogStatus === "error" ? "Katalog belum bisa dimuat. Periksa koneksi Supabase." : "Katalog belum terhubung ke database. Produk contoh tidak ditampilkan."}
           </div>
           <div className="catalog-tools">
             <label className="search-box"><Search size={17} /><input value={searchTerm} onChange={(event) => setSearchTerm(event.target.value)} placeholder="Cari aplikasi atau paket premium…" aria-label="Cari layanan" />{searchTerm && <button type="button" onClick={() => setSearchTerm("")} aria-label="Hapus pencarian"><X size={15} /></button>}</label>
@@ -266,14 +260,14 @@ export default function HomePage() {
           </div>
           <div className="service-grid">
             {filteredServices.map((service) => <article className="service-card" key={service.id}>
-              <div className="service-card-top">{service.image_url ? <img src={service.image_url} alt={service.name} loading="lazy" /> : <span className={"service-icon " + service.tone}>{service.icon}</span>}<span className="demo-tag">DEMO</span></div>
+              <div className="service-card-top">{service.image_url ? <img src={service.image_url} alt={service.name} loading="lazy" /> : <span className={"service-icon " + service.tone}>{service.icon}</span>}</div>
               <span className="service-category">{service.category}</span><h3>{service.name}</h3><p>{service.description}</p>
               <div className="service-meta"><span>{service.duration}</span><span>{service.methodLabel}</span></div>
-              <div className="service-card-bottom"><div><small>{catalogStatus === "live" ? "Harga" : "Harga contoh"}</small><strong>{service.price}</strong></div><div className="card-buttons"><button className="button button-secondary button-small" type="button" onClick={() => openService(service, "detail")}>Detail</button><button className="button button-primary button-small" type="button" disabled={Boolean(service.productId && (service.stock ?? 0) <= 0)} onClick={() => openService(service, "order")}>Pesan</button></div></div>
+              <div className="service-card-bottom"><div><small>Harga</small><strong>{service.price}</strong></div><div className="card-buttons"><button className="button button-secondary button-small" type="button" onClick={() => openService(service, "detail")}>Detail</button><button className="button button-primary button-small" type="button" disabled={Boolean(service.productId && (service.stock ?? 0) <= 0)} onClick={() => openService(service, "order")}>Pesan</button></div></div>
             </article>)}
-            {filteredServices.length === 0 && <div className="empty-state"><Search size={28} /><h3>{catalogStatus === "loading" ? "Memuat katalog…" : catalogStatus === "error" ? "Katalog belum bisa dimuat" : "Paket tidak ditemukan"}</h3><p>{catalogStatus === "error" ? "Koneksi katalog sedang bermasalah. Coba lagi nanti." : "Coba kata kunci atau kategori lain."}</p><button className="button button-secondary" type="button" onClick={() => { setSearchTerm(""); setActiveCategory("Semua"); }}>Reset pencarian</button></div>}
+            {filteredServices.length === 0 && <div className="empty-state"><Search size={28} /><h3>{catalogStatus === "loading" ? "Memuat katalog…" : catalogStatus === "error" ? "Katalog belum bisa dimuat" : catalogStatus === "unconfigured" ? "Katalog belum terhubung" : searchTerm || activeCategory !== "Semua" ? "Paket tidak ditemukan" : "Belum ada produk aktif"}</h3><p>{catalogStatus === "error" ? "Koneksi katalog sedang bermasalah. Coba lagi nanti." : catalogStatus === "unconfigured" ? "Hubungkan Supabase agar produk yang disimpan di admin muncul di toko." : catalogStatus === "live" && !searchTerm && activeCategory === "Semua" ? "Tambahkan dan aktifkan produk di panel admin; produk akan muncul otomatis di sini." : "Coba kata kunci atau kategori lain."}</p>{(searchTerm || activeCategory !== "Semua") && <button className="button button-secondary" type="button" onClick={() => { setSearchTerm(""); setActiveCategory("Semua"); }}>Reset pencarian</button>}</div>}
           </div>
-          <p className="catalog-note"><CircleHelp size={15} /> Data dan harga demo hanya untuk pengujian tampilan; pastikan paket dan harga aktual dikonfirmasi sebelum transaksi.</p>
+          <p className="catalog-note"><CircleHelp size={15} /> Katalog hanya menampilkan produk aktif dari panel admin, termasuk foto, harga, stok, dan deskripsi yang tersimpan.</p>
         </div>
       </section>
 
