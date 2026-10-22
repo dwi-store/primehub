@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="600" viewBox="0 0 1200 600" role="img" aria-labelledby="title desc">
+<title id="title">CapCut Premium — PrimeHub</title>
+<desc id="desc">Artwork for the CapCut Premium product listing with cinematic black, violet, and teal accents.</desc>
+<defs>
+  <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#090c16"/><stop offset=".52" stop-color="#1a1c34"/><stop offset="1" stop-color="#143c43"/></linearGradient>
+  <linearGradient id="edge" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#c5a6ff"/><stop offset=".5" stop-color="#f7fbff"/><stop offset="1" stop-color="#6cf0db"/></linearGradient>
+  <filter id="glow" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="32"/></filter>
+</defs>
+<rect width="1200" height="600" rx="32" fill="url(#bg)"/>
+<circle cx="900" cy="210" r="190" fill="#7961fc" opacity=".26" filter="url(#glow)"/>
+<circle cx="1080" cy="450" r="180" fill="#22d9bc" opacity=".16" filter="url(#glow)"/>
+<g transform="translate(800 65)">
+  <rect x="0" y="0" width="330" height="440" rx="34" fill="#090b13" stroke="#ffffff" stroke-opacity=".16" stroke-width="2"/>
+  <rect x="18" y="18" width="294" height="404" rx="24" fill="#151927"/>
+  <path d="M46 95 L142 48 L204 108 L108 156 Z" fill="url(#edge)"/>
+  <path d="M124 156 L220 109 L281 169 L185 216 Z" fill="#c9f8f1"/>
+  <path d="M46 234 L142 186 L204 247 L108 294 Z" fill="#f7fbff"/>
+  <path d="M124 294 L220 247 L281 307 L185 354 Z" fill="url(#edge)"/>
+  <rect x="48" y="375" width="234" height="7" rx="3.5" fill="#ffffff" opacity=".13"/>
+  <rect x="48" y="391" width="158" height="7" rx="3.5" fill="#ffffff" opacity=".09"/>
+</g>
+<g font-family="Arial,Helvetica,sans-serif" fill="#fff">
+  <text x="76" y="100" font-size="20" font-weight="700" letter-spacing="5" opacity=".76">PRIMEHUB • KATALOG PREMIUM</text>
+  <text x="70" y="248" font-size="75" font-weight="800" letter-spacing="-2">CapCut</text>
+  <text x="74" y="320" font-size="54" font-weight="800" letter-spacing="2">PREMIUM</text>
+  <rect x="75" y="360" width="305" height="4" rx="2" fill="#71e8d6"/>
+  <text x="75" y="408" font-size="23" opacity=".9">Edit video dengan lebih maksimal</text>
+  <text x="75" y="449" font-size="18" opacity=".72">Video • Efek • Kreativitas</text>
+</g>
+<path d="M680 140l17 17-17 17-17-17z" fill="#fff" opacity=".55"/><circle cx="713" cy="210" r="7" fill="#76ecd7"/><circle cx="665" cy="235" r="4" fill="#fff" opacity=".8"/>
+</svg>
