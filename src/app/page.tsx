@@ -250,7 +250,7 @@ export default function HomePage() {
       <header className="site-header">
         <div className="container nav">
           <a className="brand" href="#home" aria-label="UPPRIME beranda">
-            <Image src="/upprime/primehub-logo.svg" alt="UPPRIME" width={181} height={50} priority />
+            <Image src="/upprime/upprime-header-logo.webp" alt="UPPRIME — Premium Services. Better Life." width={181} height={50} priority />
           </a>
           <nav className="nav-links" aria-label="Navigasi utama">
             <a href="#home">Beranda</a><a href="#layanan">Katalog Premium</a><a href="#cara-pesan">Cara Pesan</a><a href="#bantuan">Bantuan</a><a href="/upprime/syarat-ketentuan/">Syarat Layanan</a><a href="/upprime/pengembalian-dana/">Garansi & Refund</a>
