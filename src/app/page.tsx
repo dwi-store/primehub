@@ -124,7 +124,7 @@ export default function HomePage() {
           const price = Number(product.price_idr);
           return {
             id: product.id, productId: product.id, name: product.name, app: product.name,
-            category, description: product.description || "Informasi layanan digital PrimeHub.",
+            category, description: product.description || "Informasi layanan digital UPPRIME.",
             price_idr: price, price: money(price), stock: product.stock,
             duration: product.stock > 0 ? "Stok tersedia" : "Stok habis",
             icon: style.icon, tone: style.tone, image_url: product.image_url,
@@ -213,7 +213,7 @@ export default function HomePage() {
           throw new Error("Respons pesanan tidak lengkap. Hubungi admin untuk memeriksa kode pesanan.");
         }
         const summary = [
-          "PrimeHub — ringkasan pesanan",
+          "UPPRIME — ringkasan pesanan",
           "Layanan: " + selectedService.name,
           "Kode pesanan: " + order.order_code,
           "Total: " + money(orderTotal),
@@ -228,7 +228,7 @@ export default function HomePage() {
         return;
       }
       setRequestSummary([
-        "PrimeHub — ringkasan permintaan demo",
+        "UPPRIME — ringkasan permintaan demo",
         "Layanan: " + selectedService.name,
         "Harga contoh: " + selectedService.price,
         "Nama: " + customerName,
@@ -249,11 +249,11 @@ export default function HomePage() {
     <main className="primehub-app">
       <header className="site-header">
         <div className="container nav">
-          <a className="brand" href="#home" aria-label="PrimeHub beranda">
-            <Image src="/primehub/primehub-logo.svg" alt="PrimeHub" width={150} height={42} priority />
+          <a className="brand" href="#home" aria-label="UPPRIME beranda">
+            <Image src="/upprime/primehub-logo.svg" alt="UPPRIME" width={181} height={50} priority />
           </a>
           <nav className="nav-links" aria-label="Navigasi utama">
-            <a href="#home">Beranda</a><a href="#layanan">Katalog Premium</a><a href="#cara-pesan">Cara Pesan</a><a href="#bantuan">Bantuan</a><a href="/primehub/syarat-ketentuan/">Syarat Layanan</a><a href="/primehub/pengembalian-dana/">Garansi & Refund</a>
+            <a href="#home">Beranda</a><a href="#layanan">Katalog Premium</a><a href="#cara-pesan">Cara Pesan</a><a href="#bantuan">Bantuan</a><a href="/upprime/syarat-ketentuan/">Syarat Layanan</a><a href="/upprime/pengembalian-dana/">Garansi & Refund</a>
           </nav>
           <div className="header-actions"><a className="button button-primary" href="#layanan">Jelajahi <ArrowRight size={16} /></a></div>
         </div>
@@ -292,8 +292,8 @@ export default function HomePage() {
             <p>Baca ketentuan pembelian dan cara mengajukan penggantian atau pengembalian dana kapan saja.</p>
           </div>
           <div className="policy-entry-actions">
-            <a className="button button-secondary" href="/primehub/syarat-ketentuan/">Baca Syarat Layanan <ArrowRight size={16} /></a>
-            <a className="button button-primary" href="/primehub/pengembalian-dana/">Garansi & Pengembalian Dana <ArrowRight size={16} /></a>
+            <a className="button button-secondary" href="/upprime/syarat-ketentuan/">Baca Syarat Layanan <ArrowRight size={16} /></a>
+            <a className="button button-primary" href="/upprime/pengembalian-dana/">Garansi & Pengembalian Dana <ArrowRight size={16} /></a>
           </div>
         </div>
       </section>
@@ -348,14 +348,14 @@ export default function HomePage() {
           <details><summary>Bagaimana cara membayar?</summary><p>Setelah pesanan dicatat, tunggu konfirmasi admin melalui kontak yang kamu berikan. Jangan mengirim bukti transfer ke pihak yang tidak terverifikasi. Pesanan belum lunas sampai pembayaran diperiksa admin.</p></details>
           <details><summary>Apakah semua paket memakai undangan tim?</summary><p>Tidak. Metode aktivasi harus sesuai dukungan dan ketentuan resmi setiap penyedia.</p></details>
           <details><summary>Apakah saya perlu memberi password atau OTP?</summary><p>Tidak. Jangan pernah memasukkan password, OTP, atau kode pemulihan.</p></details>
-          <details><summary>Bagaimana jika produk bermasalah?</summary><p>Hubungi PrimeHub dengan kode pesanan. Jika produk tidak diserahkan, tidak sesuai deskripsi, atau akses tidak dapat dipulihkan/diganti selama masa yang dijanjikan, kamu dapat mengajukan penggantian atau pengembalian dana sesuai kebijakan.</p></details>
+          <details><summary>Bagaimana jika produk bermasalah?</summary><p>Hubungi UPPRIME dengan kode pesanan. Jika produk tidak diserahkan, tidak sesuai deskripsi, atau akses tidak dapat dipulihkan/diganti selama masa yang dijanjikan, kamu dapat mengajukan penggantian atau pengembalian dana sesuai kebijakan.</p></details>
         </div>
         <div className="notice final-notice">Pesanan baru berstatus menunggu verifikasi sampai admin mengonfirmasi pembayaran dan pemenuhan pesanan. Baca Syarat Layanan dan Kebijakan Pengembalian Dana sebelum melanjutkan.</div>
       </div></section>
 
       <footer className="site-footer"><div className="container">
-        <div className="footer-top"><a className="footer-brand" href="#home"><Image src="/primehub/primehub-logo.svg" alt="PrimeHub" width={140} height={40} /></a><p>Premium Services. Better Life.</p><a className="footer-link" href="#layanan">Kembali ke katalog <ArrowRight size={15} /></a></div>
-        <div className="footer-bottom"><span>© {new Date().getFullYear()} PrimeHub.</span><span>Informasi produk pihak ketiga perlu dibaca sebelum memesan.</span><span className="footer-legal-links"><a href="/primehub/syarat-ketentuan/">Syarat Layanan</a><a href="/primehub/kebijakan-privasi/">Kebijakan Privasi</a><a href="/primehub/pengembalian-dana/">Pengembalian Dana</a></span></div>
+        <div className="footer-top"><a className="footer-brand" href="#home"><Image src="/upprime/primehub-logo.svg" alt="UPPRIME" width={160} height={44} /></a><p>Premium Services. Better Life.</p><a className="footer-link" href="#layanan">Kembali ke katalog <ArrowRight size={15} /></a></div>
+        <div className="footer-bottom"><span>© {new Date().getFullYear()} UPPRIME.</span><span>Informasi produk pihak ketiga perlu dibaca sebelum memesan.</span><span className="footer-legal-links"><a href="/upprime/syarat-ketentuan/">Syarat Layanan</a><a href="/upprime/kebijakan-privasi/">Kebijakan Privasi</a><a href="/upprime/pengembalian-dana/">Pengembalian Dana</a></span></div>
       </div></footer>
 
       {selectedService && <div className="modal-backdrop" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) setSelectedService(null); }}>
@@ -372,7 +372,7 @@ export default function HomePage() {
               <label>Nama<input required maxLength={90} value={customerName} onChange={(event) => setCustomerName(event.target.value)} placeholder="Nama kamu" /></label>
               <label>Email atau WhatsApp<input required maxLength={150} value={customerContact} onChange={(event) => setCustomerContact(event.target.value)} placeholder="Kontak yang bisa dihubungi" /></label>
               <label>Catatan (opsional)<textarea maxLength={300} value={customerNote} onChange={(event) => setCustomerNote(event.target.value)} placeholder="Pertanyaan atau paket yang ingin dikonfirmasi" rows={3} /></label>
-              <label className="policy-consent"><input type="checkbox" required /> <span>Saya telah membaca <a href="/primehub/syarat-ketentuan/" target="_blank" rel="noreferrer">Syarat Layanan</a>, <a href="/primehub/kebijakan-privasi/" target="_blank" rel="noreferrer">Kebijakan Privasi</a>, dan <a href="/primehub/pengembalian-dana/" target="_blank" rel="noreferrer">Kebijakan Pengembalian Dana</a>.</span></label>
+              <label className="policy-consent"><input type="checkbox" required /> <span>Saya telah membaca <a href="/upprime/syarat-ketentuan/" target="_blank" rel="noreferrer">Syarat Layanan</a>, <a href="/upprime/kebijakan-privasi/" target="_blank" rel="noreferrer">Kebijakan Privasi</a>, dan <a href="/upprime/pengembalian-dana/" target="_blank" rel="noreferrer">Kebijakan Pengembalian Dana</a>.</span></label>
               {requestError && <p className="form-error" role="alert">{requestError}</p>}<button type="submit" className="button button-primary form-submit" disabled={submitting}>{submitting ? "Memproses…" : selectedService.productId ? "Buat pesanan" : "Buat ringkasan demo"} <ArrowRight size={17} /></button>
             </form>
           </> : <div className="request-summary">
