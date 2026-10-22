@@ -114,6 +114,72 @@ async function notifyAdminOnWhatsApp(order: WhatsAppOrderNotification): Promise<
   }
 }
 
+type OrderNotification = {
+  orderCode: string;
+  customerName: string;
+  customerContact: string;
+  totalIdr: number;
+};
+
+function compactText(value: string): string {
+  return value.replace(/[\r\n\t]+/g, " ").trim().slice(0, 160);
+}
+
+// Telegram is optional. Missing credentials or provider errors never cancel an order.
+async function notifyAdminOnTelegram(order: OrderNotification): Promise<"sent" | "not_configured" | "failed"> {
+  const botToken = Deno.env.get("TELEGRAM_BOT_TOKEN")?.trim();
+  const chatId = Deno.env.get("TELEGRAM_CHAT_ID")?.trim();
+
+  if (!botToken || !chatId) return "not_configured";
+  if (!/^\d+:[A-Za-z0-9_-]{20,}$/.test(botToken) || !/^-?\d+$/.test(chatId)) {
+    console.error("Telegram order notification configuration is invalid.");
+    return "failed";
+  }
+
+  const message = [
+    "🔔 Pesanan baru PrimeHub",
+    "Kode: " + compactText(order.orderCode),
+    "Pelanggan: " + compactText(order.customerName),
+    "Kontak: " + compactText(order.customerContact),
+    "Total: " + formatIdr(order.totalIdr),
+  ].join("\n");
+
+  try {
+    const response = await fetch("https://api.telegram.org/bot" + botToken + "/sendMessage", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        chat_id: chatId,
+        text: message,
+        protect_content: true,
+      }),
+      signal: AbortSignal.timeout(8000),
+    });
+
+    if (!response.ok) {
+      let errorCode = "unknown";
+      try {
+        const payload = await response.json();
+        errorCode = String(payload?.error_code ?? "unknown");
+      } catch {
+        // Ignore non-JSON provider responses.
+      }
+      console.error("Telegram order notification failed:", response.status, errorCode);
+      return "failed";
+    }
+
+    const payload = await response.json().catch(() => null);
+    if (payload?.ok !== true) {
+      console.error("Telegram order notification was not accepted by the provider.");
+      return "failed";
+    }
+    return "sent";
+  } catch (error) {
+    console.error("Telegram order notification request failed:", error instanceof Error ? error.name : "unknown");
+    return "failed";
+  }
+}
+
 Deno.serve(async (req: Request) => {
   const origin = req.headers.get("origin");
   if (origin && !allowedOrigins.has(origin)) {
@@ -201,13 +267,28 @@ Deno.serve(async (req: Request) => {
         : "Pesanan belum dapat dibuat";
       return reply(req, { error: safeMessage }, 400);
     }
-    const notification = await notifyAdminOnWhatsApp({
+    const orderNotification: OrderNotification = {
       orderCode: String(data?.order_code ?? ""),
       customerName,
       customerContact,
       totalIdr: Number(data?.total_idr ?? 0),
-    });
-    return reply(req, { order: data, notification }, 201);
+    };
+    const [telegramNotification, whatsappNotification] = await Promise.all([
+      notifyAdminOnTelegram(orderNotification),
+      notifyAdminOnWhatsApp(orderNotification),
+    ]);
+    // Keep the original notification field for backward compatibility.
+    const notification =
+      telegramNotification === "sent" || whatsappNotification === "sent"
+        ? "sent"
+        : telegramNotification === "not_configured" && whatsappNotification === "not_configured"
+        ? "not_configured"
+        : "failed";
+    return reply(req, {
+      order: data,
+      notification,
+      notifications: { telegram: telegramNotification, whatsapp: whatsappNotification },
+    }, 201);
   } catch (error) {
     console.error("Unexpected create-order failure:", error);
     return reply(req, { error: "Terjadi kesalahan saat membuat pesanan." }, 500);
