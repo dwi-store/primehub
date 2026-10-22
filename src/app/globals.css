@@ -220,3 +220,27 @@ button:disabled { opacity: .55; cursor: not-allowed; }
 .policy-consent { display: flex !important; align-items: flex-start; grid-template-columns: none; gap: 9px !important; font-size: 12px !important; color: var(--muted) !important; line-height: 1.6; }
 .policy-consent input[type="checkbox"] { flex: 0 0 auto; width: 16px; min-width: 16px; height: 16px; margin: 3px 0 0; accent-color: var(--blue); }
 .policy-consent a { color: #c8caff; text-decoration: underline; text-underline-offset: 3px; }
+
+
+/* Prominent customer policy links */
+.policy-entry-section {
+  padding: 27px 0;
+  border-top: 1px solid #ffffff10;
+  border-bottom: 1px solid #ffffff10;
+  background: linear-gradient(115deg, #121d32, #11172b);
+}
+.policy-entry-inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 22px;
+}
+.policy-entry-copy { max-width: 520px; }
+.policy-entry-copy h2 { font-size: clamp(20px, 3vw, 27px); line-height: 1.25; margin: 8px 0; letter-spacing: -.5px; }
+.policy-entry-copy p { color: var(--muted); font-size: 13px; line-height: 1.7; margin: 0; }
+.policy-entry-actions { display: flex; align-items: center; justify-content: flex-end; gap: 10px; flex-wrap: wrap; }
+@media (max-width: 700px) {
+  .policy-entry-inner { align-items: stretch; flex-direction: column; gap: 15px; }
+  .policy-entry-actions { justify-content: stretch; flex-direction: column; }
+  .policy-entry-actions .button { width: 100%; justify-content: center; }
+}
