@@ -1,9 +1,9 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  // Repository is published at https://dwi-store.github.io/primehub/
+  // Repository is published at https://dwi-store.github.io/upprime/
   output: "export",
-  basePath: "/primehub",
+  basePath: "/upprime",
   trailingSlash: true,
   images: {
     unoptimized: true
