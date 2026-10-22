@@ -112,11 +112,11 @@ export default function AdminPage() {
           const first = newOrders[0];
           const body = newOrders.length === 1
             ? `${first.order_code} · ${first.customer_name} · ${formatMoney(first.total_idr)}`
-            : `${newOrders.length} pesanan baru masuk ke PrimeHub.`;
+            : `${newOrders.length} pesanan baru masuk ke UPPRIME.`;
           setNotice(`🔔 ${newOrders.length} pesanan baru masuk. Lihat bagian notifikasi di panel admin.`);
 
           if ("Notification" in window && Notification.permission === "granted") {
-            new Notification(newOrders.length === 1 ? "Pesanan baru PrimeHub" : `${newOrders.length} pesanan baru PrimeHub`, { body });
+            new Notification(newOrders.length === 1 ? "Pesanan baru UPPRIME" : `${newOrders.length} pesanan baru UPPRIME`, { body });
           }
         }
       } catch {
@@ -173,7 +173,7 @@ export default function AdminPage() {
         throw new Error("Tidak dapat memverifikasi hak admin. Periksa kebijakan akses profiles di Supabase.");
       }
       if (!Array.isArray(roleData) || roleData[0]?.is_admin !== true) {
-        throw new Error("Login berhasil, tetapi akun ini belum memiliki hak admin PrimeHub.");
+        throw new Error("Login berhasil, tetapi akun ini belum memiliki hak admin UPPRIME.");
       }
 
       const initialData = await loadData(data.access_token);
@@ -397,7 +397,7 @@ export default function AdminPage() {
 
       {!token ? <form onSubmit={signIn} style={{ background: "white", padding: 24, borderRadius: 18, border: "1px solid #e8eaf1", maxWidth: 480 }}>
         <h2 style={{ marginTop: 0 }}>Login admin</h2>
-        <p style={{ color: "#687087", lineHeight: 1.6 }}>Masuk memakai akun admin PrimeHub yang sama dengan di laptop. Akun baru tidak bisa menjadi admin melalui halaman ini.</p>
+        <p style={{ color: "#687087", lineHeight: 1.6 }}>Masuk memakai akun admin UPPRIME yang sama dengan di laptop. Akun baru tidak bisa menjadi admin melalui halaman ini.</p>
         {!configured && <p style={{ background: "#fff4db", padding: 12, borderRadius: 10 }}>Supabase belum dikonfigurasi pada frontend. Panel tidak akan tersambung sampai URL proyek dan anon key publik ditambahkan sebagai environment variables saat build.</p>}
         <label style={{ display: "block", fontWeight: 700, marginTop: 14 }}>Email<input required type="email" inputMode="email" autoCapitalize="none" autoCorrect="off" spellCheck={false} autoComplete="username" value={email} onChange={e => setEmail(e.target.value)} style={inputStyle} /></label>{email.trim().toLowerCase().endsWith("@gmai.com") && <p role="status" style={{ color: "#b45309", background: "#fff7ed", border: "1px solid #fed7aa", borderRadius: 9, padding: 10, fontSize: 12, lineHeight: 1.5 }}>Periksa ejaan email: alamat ini berakhiran @gmai.com. Jika memakai Gmail biasa, domainnya biasanya @gmail.com.</p>}
         <label style={{ display: "block", fontWeight: 700, marginTop: 14 }}>Password<input required type="password" autoComplete="current-password" value={password} onChange={e => setPassword(e.target.value)} style={inputStyle} /></label>
