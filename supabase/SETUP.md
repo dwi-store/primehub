@@ -25,6 +25,21 @@ The project has the active Canva Premium and CapCut Premium catalog entries. Adm
 `create-order` accepts `customer_name`, `customer_contact`, optional `customer_note`, and `items: [{ product_id, quantity }]`. Prices are read from the database instead of accepted from the browser. Product rows are locked and stock is decremented in one database transaction; the order code is returned with payment status `pending`. The public endpoint restricts browser origins, applies database-backed rate limits per detected client IP, validates input, and uses server-side service credentials.
 
 
+## Telegram bot order notifications (recommended)
+The existing \`create-order\` Edge Function can send a private Telegram message after a successful checkout. Checkout, price verification, stock reservation, and payment status are unchanged. If Telegram is not configured or Telegram is temporarily unavailable, the order remains created normally.
+
+1. In Telegram, open **@BotFather**, send \`/newbot\`, follow the prompts, and save the bot token privately.
+2. Open your newly created bot and press **Start** (or send \`/start\`) so it can message you.
+3. Get your personal Telegram chat ID by messaging **@userinfobot** and reading the numeric ID it returns. For a private one-to-one chat, use that numeric ID.
+4. Open **Supabase Dashboard → Edge Functions → Secrets** for this project and add the following secrets:
+
+| Secret name | Value |
+|---|---|
+| \`TELEGRAM_BOT_TOKEN\` | Token created by @BotFather |
+| \`TELEGRAM_CHAT_ID\` | Your numeric Telegram user/chat ID |
+
+Never commit or send the bot token in chat, and do not put it in frontend code or a \`NEXT_PUBLIC_*\` variable. After setting these secrets, create a normal test order and confirm the alert arrives. The response includes \`notifications.telegram: "sent"\`, \`"not_configured"\`, or \`"failed"\`; notification errors do not fail checkout.
+
 ## WhatsApp order notifications (optional)
 The `create-order` Edge Function can send a WhatsApp alert to the store admin after a successful order. The order is still created if WhatsApp is not configured or the provider is temporarily unavailable.
 
