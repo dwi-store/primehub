@@ -1,4 +1,4 @@
-name: Deploy PrimeHub to GitHub Pages
+name: Deploy UPPRIME to GitHub Pages
 
 on:
   push:
