@@ -42,8 +42,7 @@ const money = (value: number) => new Intl.NumberFormat("id-ID", { style: "curren
 
 const fallbackCatalogServices: Service[] = [
   {
-    id: "5a5a10f2-f820-4523-9927-dfd3190d7964",
-    productId: "5a5a10f2-f820-4523-9927-dfd3190d7964",
+    id: "demo-canva-premium",
     name: "Canva Premium",
     app: "Canva Premium",
     category: "Desain & Kreativitas",
@@ -60,8 +59,7 @@ const fallbackCatalogServices: Service[] = [
     image_url: "/upprime/products/canva-premium.svg"
   },
   {
-    id: "63c90e10-d8ed-4904-a4ba-28e3239c9ba6",
-    productId: "63c90e10-d8ed-4904-a4ba-28e3239c9ba6",
+    id: "demo-capcut-premium",
     name: "CapCut Premium",
     app: "CapCut Premium",
     category: "Video & Editing",
@@ -91,7 +89,7 @@ export default function HomePage() {
   const [requestError, setRequestError] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [createdOrder, setCreatedOrder] = useState<{ order_code: string; total_idr: number } | null>(null);
-  const [catalogServices, setCatalogServices] = useState<Service[]>(fallbackCatalogServices);
+  const [catalogServices, setCatalogServices] = useState<Service[]>(supabase ? [] : fallbackCatalogServices);
   const [catalogStatus, setCatalogStatus] = useState<"unconfigured" | "loading" | "live" | "error">(supabase ? "loading" : "unconfigured");
 
   useEffect(() => {
@@ -250,7 +248,7 @@ export default function HomePage() {
       <header className="site-header">
         <div className="container nav">
           <a className="brand" href="#home" aria-label="UPPRIME beranda">
-            <Image src="/upprime/upprime-header-logo.webp" alt="UPPRIME — Premium Services. Better Life." width={181} height={50} priority />
+            <Image src="/upprime/primehub-logo.svg" alt="UPPRIME — Premium Services. Better Life." width={181} height={50} priority />
           </a>
           <nav className="nav-links" aria-label="Navigasi utama">
             <a href="#home">Beranda</a><a href="#layanan">Katalog Premium</a><a href="#cara-pesan">Cara Pesan</a><a href="#bantuan">Bantuan</a><a href="/upprime/syarat-ketentuan/">Syarat Layanan</a><a href="/upprime/pengembalian-dana/">Garansi & Refund</a>
@@ -354,7 +352,7 @@ export default function HomePage() {
       </div></section>
 
       <footer className="site-footer"><div className="container">
-        <div className="footer-top"><a className="footer-brand" href="#home"><Image src="/upprime/upprime-header-logo.webp" alt="UPPRIME" width={160} height={44} /></a><p>Premium Services. Better Life.</p><a className="footer-link" href="#layanan">Kembali ke katalog <ArrowRight size={15} /></a></div>
+        <div className="footer-top"><a className="footer-brand" href="#home"><Image src="/upprime/primehub-logo.svg" alt="UPPRIME" width={160} height={44} /></a><p>Premium Services. Better Life.</p><a className="footer-link" href="#layanan">Kembali ke katalog <ArrowRight size={15} /></a></div>
         <div className="footer-bottom"><span>© {new Date().getFullYear()} UPPRIME.</span><span>Informasi produk pihak ketiga perlu dibaca sebelum memesan.</span><span className="footer-legal-links"><a href="/upprime/syarat-ketentuan/">Syarat Layanan</a><a href="/upprime/kebijakan-privasi/">Kebijakan Privasi</a><a href="/upprime/pengembalian-dana/">Pengembalian Dana</a></span></div>
       </div></footer>
 
