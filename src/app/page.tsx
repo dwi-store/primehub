@@ -57,7 +57,7 @@ const fallbackCatalogServices: Service[] = [
     tone: "pink",
     featured: true,
     stock: 10,
-    image_url: null
+    image_url: "/upprime/products/canva-premium.svg"
   },
   {
     id: "63c90e10-d8ed-4904-a4ba-28e3239c9ba6",
@@ -74,7 +74,7 @@ const fallbackCatalogServices: Service[] = [
     eta: "Mengikuti konfirmasi admin",
     tone: "green",
     stock: 10,
-    image_url: null
+    image_url: "/upprime/products/capcut-premium.svg"
   }
 ];
 
@@ -127,7 +127,7 @@ export default function HomePage() {
             category, description: product.description || "Informasi layanan digital UPPRIME.",
             price_idr: price, price: money(price), stock: product.stock,
             duration: product.stock > 0 ? "Stok tersedia" : "Stok habis",
-            icon: style.icon, tone: style.tone, image_url: product.image_url,
+            icon: style.icon, tone: style.tone, image_url: product.image_url || (product.name.toLowerCase().includes("canva") ? "/upprime/products/canva-premium.svg" : product.name.toLowerCase().includes("capcut") ? "/upprime/products/capcut-premium.svg" : null),
             methodLabel: "Informasi paket", eta: "Mengikuti konfirmasi admin", featured: index === 0
           };
         });
@@ -354,7 +354,7 @@ export default function HomePage() {
       </div></section>
 
       <footer className="site-footer"><div className="container">
-        <div className="footer-top"><a className="footer-brand" href="#home"><Image src="/upprime/primehub-logo.svg" alt="UPPRIME" width={160} height={44} /></a><p>Premium Services. Better Life.</p><a className="footer-link" href="#layanan">Kembali ke katalog <ArrowRight size={15} /></a></div>
+        <div className="footer-top"><a className="footer-brand" href="#home"><Image src="/upprime/upprime-header-logo.webp" alt="UPPRIME" width={160} height={44} /></a><p>Premium Services. Better Life.</p><a className="footer-link" href="#layanan">Kembali ke katalog <ArrowRight size={15} /></a></div>
         <div className="footer-bottom"><span>© {new Date().getFullYear()} UPPRIME.</span><span>Informasi produk pihak ketiga perlu dibaca sebelum memesan.</span><span className="footer-legal-links"><a href="/upprime/syarat-ketentuan/">Syarat Layanan</a><a href="/upprime/kebijakan-privasi/">Kebijakan Privasi</a><a href="/upprime/pengembalian-dana/">Pengembalian Dana</a></span></div>
       </div></footer>
 
