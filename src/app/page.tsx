@@ -75,7 +75,7 @@ export default function HomePage() {
       try {
         const response = await fetch(
           `${projectUrl}/rest/v1/products?select=id,name,description,category,price_idr,stock,is_active&is_active=eq.true&order=created_at.desc`,
-          { headers: { apikey: publicKey } }
+          { headers: { apikey: publicKey, Authorization: `Bearer ${publicKey}` } }
         );
         if (!response.ok) throw new Error("Katalog tidak dapat dimuat.");
         const rows = await response.json() as Array<{
