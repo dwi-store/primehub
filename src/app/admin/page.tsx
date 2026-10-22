@@ -158,6 +158,28 @@ export default function AdminPage() {
     } finally { setBusy(false); }
   }
 
+  async function adjustStock(product: Product, delta: number) {
+    const nextStock = product.stock + delta;
+    if (!Number.isInteger(nextStock) || nextStock < 0) {
+      setNotice("Stok tidak boleh kurang dari 0.");
+      return;
+    }
+    setBusy(true);
+    setNotice("");
+    try {
+      await api(`products?id=eq.${product.id}`, {
+        method: "PATCH",
+        body: JSON.stringify({ stock: nextStock, updated_at: new Date().toISOString() })
+      });
+      await loadData();
+      setNotice(`Stok ${product.name} berhasil ${delta > 0 ? "ditambah" : "dikurangi"} menjadi ${nextStock}.`);
+    } catch (error) {
+      setNotice(error instanceof Error ? error.message : "Gagal mengubah stok.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
   async function updateOrder(order: Order, field: "payment_status" | "order_status", value: string) {
     setBusy(true); setNotice("");
     try {
@@ -203,7 +225,7 @@ export default function AdminPage() {
             <label style={{ ...labelStyle, display: "flex", flexDirection: "row", alignItems: "center", gap: 8 }}><input type="checkbox" checked={form.is_active} onChange={e => setForm({ ...form, is_active: e.target.checked })} /> Aktif di katalog</label>
             <div style={{ display: "flex", alignItems: "end", gap: 8 }}><button disabled={busy} style={buttonStyle}>{editing ? "Simpan perubahan" : "Tambah produk"}</button>{editing && <button type="button" onClick={startNew} style={secondaryButtonStyle}>Batal</button>}</div>
           </form>
-          <div style={{ overflowX: "auto", marginTop: 20 }}><table style={tableStyle}><thead><tr><th style={thStyle}>Produk</th><th style={thStyle}>Harga</th><th style={thStyle}>Stok</th><th style={thStyle}>Status</th><th style={thStyle}>Aksi</th></tr></thead><tbody>{products.map(p => <tr key={p.id}><td style={tdStyle}><strong>{p.name}</strong><br /><small>{p.slug}</small></td><td style={tdStyle}>{money(p.price_idr)}</td><td style={tdStyle}>{p.stock}</td><td style={tdStyle}>{p.is_active ? "Aktif" : "Nonaktif"}</td><td style={tdStyle}><button onClick={() => startEdit(p)} style={secondaryButtonStyle}>Edit</button></td></tr>)}</tbody></table>{products.length === 0 && <p style={{ color: "#687087" }}>Belum ada produk atau akun ini belum memiliki izin membaca katalog.</p>}</div>
+          <div style={{ overflowX: "auto", marginTop: 20 }}><table style={tableStyle}><thead><tr><th style={thStyle}>Produk</th><th style={thStyle}>Harga</th><th style={thStyle}>Stok (− / +)</th><th style={thStyle}>Status</th><th style={thStyle}>Aksi</th></tr></thead><tbody>{products.map(p => <tr key={p.id}><td style={tdStyle}><strong>{p.name}</strong><br /><small>{p.slug}</small></td><td style={tdStyle}>{money(p.price_idr)}</td><td style={tdStyle}><div style={{ display: "flex", alignItems: "center", gap: 7, minWidth: 150 }}><button type="button" aria-label={`Kurangi stok ${p.name}`} disabled={busy || p.stock <= 0} onClick={() => adjustStock(p, -1)} style={{ ...secondaryButtonStyle, padding: "6px 11px", minWidth: 34 }}>−</button><strong style={{ minWidth: 24, textAlign: "center" }}>{p.stock}</strong><button type="button" aria-label={`Tambah stok ${p.name}`} disabled={busy} onClick={() => adjustStock(p, 1)} style={{ ...secondaryButtonStyle, padding: "6px 11px", minWidth: 34 }}>+</button><button type="button" disabled={busy} onClick={() => startEdit(p)} style={{ ...secondaryButtonStyle, padding: "6px 9px" }}>Atur</button></div></td><td style={tdStyle}>{p.is_active ? "Aktif" : "Nonaktif"}</td><td style={tdStyle}><button onClick={() => startEdit(p)} style={secondaryButtonStyle}>Edit produk</button></td></tr>)}</tbody></table>{products.length === 0 && <p style={{ color: "#687087" }}>Belum ada produk atau akun ini belum memiliki izin membaca katalog.</p>}</div>
         </section>
         <section style={panelStyle}>
           <h2 style={{ marginTop: 0 }}>Pesanan terbaru</h2>
