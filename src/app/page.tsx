@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import { createClient } from "@supabase/supabase-js";
 import { useEffect, useMemo, useState } from "react";
 import {
   ArrowRight,
@@ -50,6 +51,7 @@ const demoServices: Service[] = [
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL?.replace(/\/$/, "");
 const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+const supabase = supabaseUrl && supabaseKey ? createClient(supabaseUrl, supabaseKey, { auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false } }) : null;
 const money = (value: number) => new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", maximumFractionDigits: 0 }).format(value);
 
 export default function HomePage() {
@@ -69,20 +71,22 @@ export default function HomePage() {
   const [catalogStatus, setCatalogStatus] = useState<"demo" | "loading" | "live" | "error">(supabaseUrl && supabaseKey ? "loading" : "demo");
 
   useEffect(() => {
-    if (!supabaseUrl || !supabaseKey) return;
+    if (!supabase) return;
     let cancelled = false;
+    let refreshInProgress = false;
+    let hasLoadedSuccessfully = false;
+
     async function loadCatalog() {
+      if (cancelled || refreshInProgress) return;
+      refreshInProgress = true;
       try {
-        const response = await fetch(
-          `${supabaseUrl}/rest/v1/products?select=id,name,description,category,image_url,price_idr,stock,is_active&is_active=eq.true&order=created_at.desc`,
-          { headers: { apikey: supabaseKey!, Accept: "application/json" } }
-        );
-        if (!response.ok) throw new Error("Katalog tidak dapat dimuat.");
-        const rows = await response.json() as Array<{
-          id: string; name: string; description: string | null; category: string | null;
-          price_idr: number | string; stock: number; is_active: boolean; image_url: string | null;
-        }>;
-        if (!Array.isArray(rows)) throw new Error("Format katalog tidak valid.");
+        const { data, error } = await supabase
+          .from("products")
+          .select("id,name,description,category,image_url,price_idr,stock,is_active,created_at")
+          .eq("is_active", true)
+          .order("created_at", { ascending: false });
+        if (error) throw error;
+        const rows = data ?? [];
         const mapped: Service[] = rows.map((product, index) => {
           const category = product.category?.trim() || "Lainnya";
           const categoryLower = category.toLowerCase();
@@ -101,13 +105,39 @@ export default function HomePage() {
             methodLabel: "Informasi paket", eta: "Mengikuti konfirmasi admin", featured: index === 0
           };
         });
-        if (!cancelled) { setCatalogServices(mapped); setCatalogStatus("live"); }
+        if (!cancelled) {
+          setCatalogServices(mapped);
+          setCatalogStatus("live");
+          hasLoadedSuccessfully = true;
+        }
       } catch {
-        if (!cancelled) { setCatalogServices([]); setCatalogStatus("error"); }
+        if (!cancelled && !hasLoadedSuccessfully) {
+          setCatalogServices([]);
+          setCatalogStatus("error");
+        }
+      } finally {
+        refreshInProgress = false;
       }
     }
+
+    // Fetch on open, then keep an already-open shop synchronized with admin edits.
     void loadCatalog();
-    return () => { cancelled = true; };
+    const channel = supabase
+      .channel("primehub-storefront-products")
+      .on("postgres_changes", { event: "*", schema: "public", table: "products" }, () => {
+        void loadCatalog();
+      })
+      .subscribe();
+    const backupRefresh = window.setInterval(() => { void loadCatalog(); }, 15000);
+    const onFocus = () => { void loadCatalog(); };
+    window.addEventListener("focus", onFocus);
+
+    return () => {
+      cancelled = true;
+      window.clearInterval(backupRefresh);
+      window.removeEventListener("focus", onFocus);
+      void supabase.removeChannel(channel);
+    };
   }, []);
 
   const categoryOptions = useMemo(
@@ -213,7 +243,7 @@ export default function HomePage() {
             <div className="trust-row"><span>✓ Metode transparan</span><span>✓ Status jelas</span><span>✓ Tanpa password/OTP</span></div>
           </div>
           <div className="hero-preview">
-            <div className="preview-head"><div><strong>Pilihan Premium</strong><small>Pratinjau katalog</small></div><span className="demo-tag">DEMO</span></div>
+            <div className="preview-head"><div><strong>Pilihan Premium</strong><small>Pratinjau katalog</small></div>{catalogStatus !== "live" && <span className="demo-tag">DEMO</span>}</div>
             <div className="preview-item"><span className="preview-icon">🎨</span><span><b>Design Plus</b><small>Desain kreatif</small></span><strong className="preview-price">Rp29 rb</strong></div>
             <div className="preview-item"><span className="preview-icon">🎵</span><span><b>Music Premium</b><small>Musik &amp; audio</small></span><strong className="preview-price">Rp19 rb</strong></div>
             <div className="preview-item"><span className="preview-icon">☁️</span><span><b>Cloud Extra</b><small>Penyimpanan cloud</small></span><strong className="preview-price">Rp25 rb</strong></div>
