@@ -19,7 +19,7 @@ This directory contains the database, admin, and checkout backend source used by
 
 ## Database setup
 
-For a new project, run `schema.sql`. To recreate this setup on a database where the base tables already exist, see `SETUP.md` and the profile bootstrap, API permission, order creation, stock cancellation, and security/rate-limit migrations.
+For a new project, run `schema.sql`. To recreate this setup on a database where the base tables already exist, see `SETUP.md` and the profile bootstrap, API permission, order creation, stock cancellation, checkout rate-limit, and private rate-limit RLS policy migrations.
 
 ## Pre-launch checks
 
