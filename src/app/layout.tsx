@@ -7,12 +7,7 @@ export const metadata: Metadata = {
     "Temukan layanan dan langganan digital premium favoritmu dengan pengalaman pemesanan yang mudah di UPPRIME.",
   applicationName: "UPPRIME",
   icons: {
-    icon: [
-      { url: "/upprime/favicon.svg", type: "image/svg+xml" },
-      { url: "/upprime/favicon.ico", sizes: "any" },
-      { url: "/upprime/favicon-32.png", sizes: "32x32", type: "image/png" }
-    ],
-    apple: [{ url: "/upprime/favicon-180.png", sizes: "180x180", type: "image/png" }]
+    icon: [{ url: "/upprime/favicon.svg", type: "image/svg+xml" }]
   }
 };
 
