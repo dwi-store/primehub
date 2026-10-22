@@ -31,6 +31,7 @@ type Order = {
 
 export default function AdminPage() {
   const [email, setEmail] = useState("");
+  const [authMode, setAuthMode] = useState<"signin" | "signup">("signin");
   const [password, setPassword] = useState("");
   const [token, setToken] = useState("");
   const [userId, setUserId] = useState("");
@@ -69,29 +70,47 @@ export default function AdminPage() {
     setOrders(o);
   }
 
+
   async function signIn(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setBusy(true);
     setNotice("");
     try {
       if (!supabaseUrl || !supabaseKey) {
-        throw new Error("NEXT_PUBLIC_SUPABASE_URL dan NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY (atau NEXT_PUBLIC_SUPABASE_ANON_KEY) belum dikonfigurasi.");
+        throw new Error("Konfigurasi Supabase belum tersedia saat build situs.");
       }
-      const response = await fetch(`${supabaseUrl}/auth/v1/token?grant_type=password`, {
+      const isSignup = authMode === "signup";
+      const endpoint = isSignup
+        ? supabaseUrl + "/auth/v1/signup"
+        : supabaseUrl + "/auth/v1/token?grant_type=password";
+      const payload = isSignup
+        ? { email, password, data: { display_name: email.split("@")[0] } }
+        : { email, password };
+      const response = await fetch(endpoint, {
         method: "POST",
         headers: { apikey: supabaseKey, "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password })
+        body: JSON.stringify(payload)
       });
-      const data = await response.json();
-      if (!response.ok) throw new Error(data.msg || data.message || "Login gagal.");
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        throw new Error(data.msg || data.message || data.error_description || (isSignup ? "Pendaftaran gagal." : "Login gagal."));
+      }
+
+      if (isSignup) {
+        setPassword("");
+        setAuthMode("signin");
+        setNotice("Pendaftaran diproses. Periksa email untuk konfirmasi bila diminta. Akun baru tidak otomatis menjadi admin; hak admin hanya diaktifkan oleh pemilik proyek.");
+        return;
+      }
+
       if (!data.access_token || !data.user?.id) throw new Error("Respons login tidak lengkap.");
 
-      // Check the server-controlled profile role before revealing the admin dashboard.
+      // Read the server-controlled role before revealing protected admin data.
       const roleResponse = await fetch(
-        `${supabaseUrl}/rest/v1/profiles?id=eq.${encodeURIComponent(data.user.id)}&select=is_admin`,
-        { headers: { apikey: supabaseKey, Authorization: `Bearer ${data.access_token}` } }
+        supabaseUrl + "/rest/v1/profiles?id=eq." + encodeURIComponent(data.user.id) + "&select=is_admin",
+        { headers: { apikey: supabaseKey, Authorization: "Bearer " + data.access_token } }
       );
-      const roleData = await roleResponse.json();
+      const roleData = await roleResponse.json().catch(() => []);
       if (!roleResponse.ok) {
         throw new Error("Tidak dapat memverifikasi hak admin. Periksa kebijakan akses profiles di Supabase.");
       }
@@ -99,7 +118,6 @@ export default function AdminPage() {
         throw new Error("Login berhasil, tetapi akun ini belum memiliki hak admin PrimeHub.");
       }
 
-      // Load protected data before setting the UI to an authenticated state.
       await loadData(data.access_token);
       setToken(data.access_token);
       setUserId(data.user.id);
@@ -166,11 +184,11 @@ export default function AdminPage() {
 
       {!token ? <form onSubmit={signIn} style={{ background: "white", padding: 24, borderRadius: 18, border: "1px solid #e8eaf1", maxWidth: 480 }}>
         <h2 style={{ marginTop: 0 }}>Login admin</h2>
-        <p style={{ color: "#687087", lineHeight: 1.6 }}>Gunakan akun yang dibuat di Supabase Auth dan yang profilnya sudah diberi hak admin oleh pemilik proyek.</p>
+        <p style={{ color: "#687087", lineHeight: 1.6 }}>{authMode === "signup" ? "Daftar dengan email milikmu. Akun baru tetap non-admin sampai pemilik proyek mengaktifkannya." : "Masuk memakai akun yang sudah diberi hak admin PrimeHub."}</p>
         {!configured && <p style={{ background: "#fff4db", padding: 12, borderRadius: 10 }}>Supabase belum dikonfigurasi pada frontend. Panel tidak akan tersambung sampai URL proyek dan anon key publik ditambahkan sebagai environment variables saat build.</p>}
         <label style={{ display: "block", fontWeight: 700, marginTop: 14 }}>Email<input required type="email" value={email} onChange={e => setEmail(e.target.value)} style={inputStyle} /></label>
-        <label style={{ display: "block", fontWeight: 700, marginTop: 14 }}>Password<input required type="password" value={password} onChange={e => setPassword(e.target.value)} style={inputStyle} /></label>
-        <button disabled={busy || !configured} style={buttonStyle}>{busy ? "Memproses…" : "Login"}</button>
+        <label style={{ display: "block", fontWeight: 700, marginTop: 14 }}>Password<input required minLength={authMode === "signup" ? 8 : undefined} type="password" value={password} onChange={e => setPassword(e.target.value)} style={inputStyle} /></label>
+        <button disabled={busy || !configured} style={buttonStyle}>{busy ? "Memproses…" : authMode === "signup" ? "Daftar akun" : "Login admin"}</button><button type="button" disabled={busy || !configured} onClick={() => { setAuthMode(authMode === "signin" ? "signup" : "signin"); setNotice(""); }} style={{ ...secondaryButtonStyle, display: "block", width: "100%", marginTop: 12 }}>{authMode === "signin" ? "Belum punya akun? Daftar" : "Sudah punya akun? Login"}</button>
       </form> : <>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12, flexWrap: "wrap", marginBottom: 20 }}><span style={{ color: "#687087", fontSize: 13 }}>Sesi aktif · {userId}</span><button onClick={signOut} style={secondaryButtonStyle}>Keluar</button></div>
         <section style={panelStyle}>
