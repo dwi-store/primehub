@@ -253,7 +253,7 @@ export default function HomePage() {
             <Image src="/primehub/primehub-logo.svg" alt="PrimeHub" width={150} height={42} priority />
           </a>
           <nav className="nav-links" aria-label="Navigasi utama">
-            <a href="#home">Beranda</a><a href="#layanan">Katalog Premium</a><a href="#cara-pesan">Cara Pesan</a><a href="#bantuan">Bantuan</a>
+            <a href="#home">Beranda</a><a href="#layanan">Katalog Premium</a><a href="#cara-pesan">Cara Pesan</a><a href="#bantuan">Bantuan</a><a href="/primehub/syarat-ketentuan/">Syarat Layanan</a><a href="/primehub/pengembalian-dana/">Garansi & Refund</a>
           </nav>
           <div className="header-actions"><a className="button button-primary" href="#layanan">Jelajahi <ArrowRight size={16} /></a></div>
         </div>
@@ -280,6 +280,20 @@ export default function HomePage() {
             </div>)}
             {catalogServices.length === 0 && <p className="preview-empty">{catalogStatus === "loading" ? "Mengambil produk yang diunggah dari panel admin…" : catalogStatus === "error" ? "Produk belum dapat dimuat. Coba buka ulang halaman." : "Belum ada produk aktif. Produk yang disimpan di panel admin akan muncul di sini."}</p>}
             <p className="preview-note">Daftar ini tersambung ke produk aktif di panel admin.</p>
+          </div>
+        </div>
+      </section>
+
+      <section className="policy-entry-section" id="kebijakan">
+        <div className="container policy-entry-inner">
+          <div className="policy-entry-copy">
+            <span className="eyebrow">INFORMASI PEMBELI</span>
+            <h2>Ketahui aturan sebelum memesan</h2>
+            <p>Baca ketentuan pembelian dan cara mengajukan penggantian atau pengembalian dana kapan saja.</p>
+          </div>
+          <div className="policy-entry-actions">
+            <a className="button button-secondary" href="/primehub/syarat-ketentuan/">Baca Syarat Layanan <ArrowRight size={16} /></a>
+            <a className="button button-primary" href="/primehub/pengembalian-dana/">Garansi & Pengembalian Dana <ArrowRight size={16} /></a>
           </div>
         </div>
       </section>
