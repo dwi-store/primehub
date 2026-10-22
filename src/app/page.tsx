@@ -67,7 +67,7 @@ export default function HomePage() {
       if (cancelled || refreshInProgress) return;
       refreshInProgress = true;
       try {
-        const { data, error } = await client
+        const { data, error } = await client!
           .from("products")
           .select("id,name,description,category,image_url,price_idr,stock,is_active,created_at")
           .eq("is_active", true)
@@ -109,7 +109,7 @@ export default function HomePage() {
 
     // Fetch on open, then keep an already-open shop synchronized with admin edits.
     void loadCatalog();
-    const channel = client
+    const channel = client!
       .channel("primehub-storefront-products")
       .on("postgres_changes", { event: "*", schema: "public", table: "products" }, () => {
         void loadCatalog();
@@ -123,7 +123,7 @@ export default function HomePage() {
       cancelled = true;
       window.clearInterval(backupRefresh);
       window.removeEventListener("focus", onFocus);
-      void client.removeChannel(channel);
+      void client!.removeChannel(channel);
     };
   }, []);
 
