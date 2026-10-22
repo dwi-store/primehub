@@ -30,9 +30,10 @@ jobs:
       - name: Build static site
         run: npm run build
         env:
-          # Only public browser keys belong here. Never expose the service-role key.
-          NEXT_PUBLIC_SUPABASE_URL: ${{ vars.NEXT_PUBLIC_SUPABASE_URL || secrets.NEXT_PUBLIC_SUPABASE_URL }}
-          NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: ${{ vars.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY || secrets.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY }}
+          # Public browser credentials only. A service-role/secret key must never be placed here.
+          # These fallback values are safe to embed in a static storefront; RLS protects the database.
+          NEXT_PUBLIC_SUPABASE_URL: ${{ vars.NEXT_PUBLIC_SUPABASE_URL || 'https://cfzleqzsynzkjukmtqvf.supabase.co' }}
+          NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: ${{ vars.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY || 'sb_publishable_Gq6UGYMCKWRCAX-2r6neIw_caZLJrsY' }}
           NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ vars.NEXT_PUBLIC_SUPABASE_ANON_KEY || secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
       - name: Configure GitHub Pages
         uses: actions/configure-pages@v5
