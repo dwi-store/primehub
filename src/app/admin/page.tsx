@@ -1,7 +1,7 @@
 "use client";
 
 import type { FormEvent } from "react";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL?.replace(/\/$/, "");
@@ -43,6 +43,18 @@ export default function AdminPage() {
   const [editing, setEditing] = useState<Product | null>(null);
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [form, setForm] = useState({ slug: "", name: "", description: "", category: "Produktivitas", image_url: "", price_idr: "0", stock: "0", is_active: true });
+  const [notificationPermission, setNotificationPermission] = useState<NotificationPermission | "unsupported">("default");
+  const [newOrderAlerts, setNewOrderAlerts] = useState<Order[]>([]);
+  const seenOrderIds = useRef<Set<string>>(new Set());
+  const initializedOrderWatch = useRef(false);
+
+  useEffect(() => {
+    if (typeof window === "undefined" || !("Notification" in window)) {
+      setNotificationPermission("unsupported");
+      return;
+    }
+    setNotificationPermission(Notification.permission);
+  }, []);
 
   const configured = Boolean(supabaseUrl && supabaseKey);
 
@@ -70,8 +82,56 @@ export default function AdminPage() {
     ]);
     setProducts(p);
     setOrders(o);
+    return { products: p as Product[], orders: o as Order[] };
   }
 
+  // Watch for new orders while the admin panel is open; the first load is
+  // treated as history so existing orders do not trigger false alerts.
+  useEffect(() => {
+    if (!token || !initializedOrderWatch.current || !supabaseUrl || !supabaseKey) return;
+    let cancelled = false;
+    let checking = false;
+
+    async function checkForNewOrders() {
+      if (cancelled || checking) return;
+      checking = true;
+      try {
+        const latest = await api(
+          "orders?select=id,order_code,customer_name,customer_contact,total_idr,payment_status,order_status,created_at&order=created_at.desc&limit=50",
+          {},
+          token
+        ) as Order[];
+        if (cancelled) return;
+
+        const newOrders = latest.filter(order => !seenOrderIds.current.has(order.id));
+        seenOrderIds.current = new Set(latest.map(order => order.id));
+        setOrders(latest);
+
+        if (newOrders.length > 0) {
+          setNewOrderAlerts(previous => [...newOrders, ...previous].slice(0, 10));
+          const first = newOrders[0];
+          const body = newOrders.length === 1
+            ? `${first.order_code} · ${first.customer_name} · ${formatMoney(first.total_idr)}`
+            : `${newOrders.length} pesanan baru masuk ke PrimeHub.`;
+          setNotice(`🔔 ${newOrders.length} pesanan baru masuk. Lihat bagian notifikasi di panel admin.`);
+
+          if ("Notification" in window && Notification.permission === "granted") {
+            new Notification(newOrders.length === 1 ? "Pesanan baru PrimeHub" : `${newOrders.length} pesanan baru PrimeHub`, { body });
+          }
+        }
+      } catch {
+        // Keep existing order data visible; the next interval will retry.
+      } finally {
+        checking = false;
+      }
+    }
+
+    const intervalId = window.setInterval(() => { void checkForNewOrders(); }, 12000);
+    return () => {
+      cancelled = true;
+      window.clearInterval(intervalId);
+    };
+  }, [token]);
 
   async function signIn(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -120,7 +180,10 @@ export default function AdminPage() {
         throw new Error("Login berhasil, tetapi akun ini belum memiliki hak admin PrimeHub.");
       }
 
-      await loadData(data.access_token);
+      const initialData = await loadData(data.access_token);
+      seenOrderIds.current = new Set(initialData.orders.map(order => order.id));
+      initializedOrderWatch.current = true;
+      setNewOrderAlerts([]);
       setToken(data.access_token);
       setUserId(data.user.id);
       setPassword("");
@@ -230,11 +293,38 @@ export default function AdminPage() {
     } finally { setBusy(false); }
   }
 
+  async function enableOrderNotifications() {
+    if (typeof window === "undefined" || !("Notification" in window)) {
+      setNotificationPermission("unsupported");
+      setNotice("Browser ini tidak mendukung notifikasi desktop. Notifikasi baru tetap terlihat di panel admin selama halaman terbuka.");
+      return;
+    }
+    try {
+      const permission = await Notification.requestPermission();
+      setNotificationPermission(permission);
+      setNotice(permission === "granted"
+        ? "Notifikasi browser aktif. Panel ini akan memberi tahu saat pesanan baru masuk selama halaman admin terbuka."
+        : permission === "denied"
+          ? "Izin notifikasi diblokir browser. Ubah izin situs menjadi Izinkan agar notifikasi desktop dapat muncul."
+          : "Notifikasi belum diizinkan. Kamu tetap melihat notifikasi di panel admin selama halaman terbuka.");
+    } catch {
+      setNotice("Izin notifikasi tidak dapat diminta. Kamu tetap melihat notifikasi di panel admin selama halaman terbuka.");
+    }
+  }
+
   function signOut() {
-    setToken(""); setUserId(""); setProducts([]); setOrders([]); setNotice("Sesi admin dihapus dari halaman ini.");
+    setToken("");
+    setUserId("");
+    setProducts([]);
+    setOrders([]);
+    setNewOrderAlerts([]);
+    seenOrderIds.current = new Set();
+    initializedOrderWatch.current = false;
+    setNotice("Sesi admin dihapus dari halaman ini.");
   }
 
   const money = (value: number) => new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", maximumFractionDigits: 0 }).format(value);
+  const formatMoney = money;
 
   return <main style={{ minHeight: "100vh", background: "#f6f7fb", color: "#10162a", padding: "28px 16px 60px" }}>
     <div style={{ maxWidth: 1120, margin: "0 auto" }}>
@@ -251,7 +341,22 @@ export default function AdminPage() {
         <label style={{ display: "block", fontWeight: 700, marginTop: 14 }}>Password<input required minLength={authMode === "signup" ? 8 : undefined} type="password" value={password} onChange={e => setPassword(e.target.value)} style={inputStyle} /></label>
         <button disabled={busy || !configured} style={buttonStyle}>{busy ? "Memproses…" : authMode === "signup" ? "Daftar akun" : "Login admin"}</button><button type="button" disabled={busy || !configured} onClick={() => { setAuthMode(authMode === "signin" ? "signup" : "signin"); setNotice(""); }} style={{ ...secondaryButtonStyle, display: "block", width: "100%", marginTop: 12 }}>{authMode === "signin" ? "Belum punya akun? Daftar" : "Sudah punya akun? Login"}</button>
       </form> : <>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12, flexWrap: "wrap", marginBottom: 20 }}><span style={{ color: "#687087", fontSize: 13 }}>Sesi aktif · {userId}</span><button onClick={signOut} style={secondaryButtonStyle}>Keluar</button></div>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12, flexWrap: "wrap", marginBottom: 20 }}>
+          <div><span style={{ color: "#687087", fontSize: 13, display: "block" }}>Sesi aktif · {userId}</span><small style={{ color: "#687087" }}>Pemeriksaan pesanan otomatis setiap 12 detik saat panel ini terbuka.</small></div>
+          <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}><button type="button" disabled={notificationPermission === "unsupported"} onClick={enableOrderNotifications} style={notificationPermission === "granted" ? enabledButtonStyle : secondaryButtonStyle}>{notificationPermission === "granted" ? "✓ Notifikasi aktif" : notificationPermission === "denied" ? "Izin notifikasi diblokir" : notificationPermission === "unsupported" ? "Browser tanpa notifikasi" : "Aktifkan notifikasi"}</button><button onClick={signOut} style={secondaryButtonStyle}>Keluar</button></div>
+        </div>
+        {newOrderAlerts.length > 0 && <section role="status" aria-live="polite" style={{ ...panelStyle, border: "1px solid #f59e0b", background: "#fffbeb" }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
+            <div><h2 style={{ margin: "0 0 4px", color: "#92400e" }}>🔔 {newOrderAlerts.length} notifikasi pesanan baru</h2><p style={{ margin: 0, color: "#92400e", fontSize: 13 }}>Pesanan terbaru terdeteksi otomatis.</p></div>
+            <button type="button" onClick={() => setNewOrderAlerts([])} style={secondaryButtonStyle}>Tandai dibaca</button>
+          </div>
+          <div style={{ display: "grid", gap: 8, marginTop: 14 }}>
+            {newOrderAlerts.slice(0, 5).map(order => <div key={order.id} style={{ display: "flex", justifyContent: "space-between", gap: 12, flexWrap: "wrap", padding: 11, background: "white", borderRadius: 9, border: "1px solid #fde68a" }}>
+              <span><strong>{order.order_code}</strong><br /><small>{order.customer_name} · {order.customer_contact}</small></span>
+              <strong>{money(order.total_idr)}</strong>
+            </div>)}
+          </div>
+        </section>}
         <section style={panelStyle}>
           <h2 style={{ marginTop: 0 }}>Kelola produk</h2>
           <form onSubmit={saveProduct} style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(180px,1fr))", gap: 12 }}>
@@ -282,6 +387,7 @@ const inputStyle: React.CSSProperties = { display: "block", width: "100%", margi
 const buttonStyle: React.CSSProperties = { padding: "12px 16px", marginTop: 16, border: 0, borderRadius: 9, background: "#5c5de8", color: "white", fontWeight: 800, cursor: "pointer" };
 const secondaryButtonStyle: React.CSSProperties = { padding: "8px 12px", border: "1px solid #dfe2ec", borderRadius: 8, background: "white", color: "#10162a", fontWeight: 700, cursor: "pointer" };
 const dangerButtonStyle: React.CSSProperties = { padding: "8px 12px", border: "1px solid #fecaca", borderRadius: 8, background: "#fff1f2", color: "#be123c", fontWeight: 800, cursor: "pointer" };
+const enabledButtonStyle: React.CSSProperties = { padding: "8px 12px", border: "1px solid #a7f3d0", borderRadius: 8, background: "#ecfdf5", color: "#047857", fontWeight: 800, cursor: "pointer" };
 const panelStyle: React.CSSProperties = { background: "white", padding: 20, borderRadius: 18, border: "1px solid #e8eaf1", marginBottom: 18 };
 const labelStyle: React.CSSProperties = { display: "block", fontWeight: 700, fontSize: 13 };
 const tableStyle: React.CSSProperties = { width: "100%", borderCollapse: "collapse", textAlign: "left" };
