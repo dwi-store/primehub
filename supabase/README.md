@@ -1,32 +1,29 @@
 # PrimeHub Supabase backend
 
-This directory contains the database, admin, and checkout backend source used by the PrimeHub static storefront. The frontend build may succeed even when the Supabase project has not yet been configured, so a successful GitHub Pages deployment alone does not prove that live orders or admin features are active.
+This directory contains the database, admin, and checkout backend source used by PrimeHub's static storefront.
+
+## Live project status (22 October 2026)
+
+- The four core tables exist and have Row Level Security enabled. The profile bootstrap, stock cancellation, and checkout-security/rate-limit migrations have been applied to the linked Supabase project.
+- The `create-order` Edge Function is deployed and active.
+- The project still has no Auth users, product records, or orders. The storefront will show live products only after actual product names, prices, stock, and active status have been entered.
+- DANA is not integrated for automatic payment verification. Payment remains pending until the store owner verifies it through the official account.
 
 ## Architecture and safety
 
-- The Next.js storefront is deployed as a static site on GitHub Pages.
-- Supabase provides PostgreSQL, Auth, and Edge Functions.
-- Keep all service-role keys and payment credentials server-side. Never commit them to GitHub or expose them in browser code.
-- Orders remain pending until an authorized admin verifies payment. DANA is not integrated automatically yet; do not treat a browser redirect or uploaded receipt as payment proof.
-- Never ask customers for a DANA PIN, OTP, account password, or other authentication secret.
+- The Next.js storefront is deployed as a static site on GitHub Pages; Supabase provides Postgres, Auth, and Edge Functions.
+- The checkout function calculates prices from the database and reserves stock atomically. It validates inputs, restricts browser origins, and enforces per-client request limits in a private table.
+- Keep service-role keys and payment credentials on the server only. The workflow uses a public publishable key for the browser; never expose `SUPABASE_SERVICE_ROLE_KEY` through a `NEXT_PUBLIC_*` variable.
+- The admin panel checks the signed-in user's `profiles.is_admin` flag and uses RLS for product/order operations. Only the project owner may grant admin rights.
+- Never mark an order paid based on a browser redirect or uploaded receipt alone. Never ask customers for a DANA PIN, OTP, or account password.
 
 ## Database setup
 
-1. For a new Supabase project, run `schema.sql` in SQL Editor.
-2. For an existing project where the schema is already installed, run migrations in `SETUP.md`, including `20261022_profile_bootstrap.sql` and the API permission, order creation, and stock cancellation migrations.
-3. Create/confirm the admin Auth user, then grant the admin role only as the project owner. See the exact SQL in `SETUP.md`.
-4. Add only public Supabase project URL and publishable/anon key to the frontend build configuration. Never expose `SUPABASE_SERVICE_ROLE_KEY` via a `NEXT_PUBLIC_*` variable.
-
-## Current backend behavior
-
-- The browser may read active products only through RLS.
-- Order creation runs in the trusted `create-order` Edge Function and an atomic database function. Prices are fetched from the database, stock is checked/locked, and status starts as pending.
-- Admin access checks the Auth user's `profiles.is_admin` flag; products and orders remain protected by RLS.
-- DANA payments are not auto-verified. Manual status changes must follow real payment verification through the official account.
+For a new project, run `schema.sql`. To recreate this setup on a database where the base tables already exist, see `SETUP.md` and the profile bootstrap, API permission, order creation, stock cancellation, and security/rate-limit migrations.
 
 ## Pre-launch checks
 
-- Test RLS with anonymous, normal authenticated, and admin users.
-- Check forged/invalid order quantities, out-of-stock products, duplicate submissions, and concurrent requests.
-- Add rate limiting/CAPTCHA and privacy/retention controls before public traffic.
-- Confirm the deployed site uses the intended Supabase project and public key, and run an end-to-end test before advertising the store as live.
+- Create an owner/admin Auth account, assign the role securely, and verify non-admin denial.
+- Add accurate products/prices/stock and test out-of-stock, forged input, duplicate, and concurrent requests.
+- Rate limiting is enabled; CAPTCHA/Turnstile and privacy/retention controls remain recommended before broad public traffic.
+- DANA automatic payments require merchant onboarding, credentials, verified callbacks, and sandbox testing.
