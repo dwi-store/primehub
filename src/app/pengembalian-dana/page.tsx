@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Pengembalian Dana — PrimeHub",
-  description: "Aturan penanganan pesanan dan pengembalian dana PrimeHub."
+  title: "Garansi dan Pengembalian Dana — PrimeHub",
+  description: "Jaminan pemenuhan pesanan, penggantian produk, dan pengembalian dana PrimeHub."
 };
 
 export default function RefundPage() {
@@ -10,26 +10,30 @@ export default function RefundPage() {
     <main className="primehub-app legal-shell">
       <header className="site-header"><div className="container nav"><a className="legal-brand" href="/primehub/">PrimeHub</a><a className="button button-secondary button-small" href="/primehub/">Kembali ke toko</a></div></header>
       <article className="legal-document container">
-        <span className="eyebrow">BANTUAN PESANAN</span>
-        <h1>Kebijakan Pengembalian Dana</h1>
+        <span className="eyebrow">PERLINDUNGAN PELANGGAN</span>
+        <h1>Garansi dan Pengembalian Dana</h1>
         <p className="legal-updated">Terakhir diperbarui: 22 Oktober 2026</p>
-        <p>Jika pesanan tidak berjalan sesuai yang dijelaskan, hubungi PrimeHub supaya masalah bisa diperiksa dan diselesaikan.</p>
-        <h2>Alasan pengajuan</h2>
+        <p>PrimeHub berkomitmen menyerahkan produk sesuai deskripsi, durasi, dan metode aktivasi yang dikonfirmasi sebelum pembayaran. Bila pesanan tidak terpenuhi atau ada masalah yang memenuhi ketentuan di bawah, pelanggan dapat meminta bantuan, penggantian, atau pengembalian dana.</p>
+        <h2>Kapan pelanggan dapat mengajukan?</h2>
         <ul>
-          <li>Pembayaran berhasil tetapi produk tidak diserahkan.</li>
-          <li>Akses yang diterima tidak sesuai dengan deskripsi pesanan.</li>
-          <li>Akses gagal digunakan atau berhenti selama masa yang dijanjikan dan tidak dapat dipulihkan atau diganti.</li>
-          <li>Pembayaran ganda atau pesanan dibatalkan oleh PrimeHub.</li>
+          <li>Pembayaran sudah terverifikasi tetapi produk atau akses tidak diserahkan.</li>
+          <li>Produk atau durasi yang diterima berbeda secara material dari informasi yang telah dikonfirmasi sebelum pembayaran.</li>
+          <li>Akses gagal digunakan, dicabut, atau berhenti selama masa yang dijanjikan dan PrimeHub tidak dapat memulihkan akses atau memberikan pengganti yang sesuai.</li>
+          <li>Terjadi pembayaran ganda atau PrimeHub membatalkan pesanan setelah pembayaran diterima.</li>
         </ul>
-        <h2>Proses</h2>
+        <h2>Pilihan penyelesaian</h2>
+        <p>PrimeHub akan memeriksa bukti transaksi dan masalah yang dilaporkan. Pelanggan dapat memilih penggantian yang setara bila tersedia dan disetujui pelanggan, atau pengembalian dana jika pesanan tidak dapat dipenuhi atau masalah tidak dapat diselesaikan. Pengembalian dana tidak menghilangkan hak pelanggan yang diberikan oleh hukum yang berlaku.</p>
+        <h2>Cara mengajukan</h2>
         <ol>
-          <li>Hubungi kanal dukungan resmi yang diberikan pada konfirmasi pesanan.</li>
-          <li>Sertakan kode pesanan, bukti pembayaran yang relevan, dan penjelasan singkat.</li>
-          <li>Admin memeriksa pesanan dan menyampaikan keputusan serta langkah berikutnya.</li>
+          <li>Siapkan kode pesanan, bukti pembayaran yang relevan, dan penjelasan singkat tentang masalahnya.</li>
+          <li>Hubungi admin melalui kanal komunikasi yang digunakan saat transaksi atau kanal dukungan resmi PrimeHub yang diumumkan.</li>
+          <li>Admin memeriksa status pesanan dan memberi kabar tentang penyelesaian. Jangan mengirim kata sandi, PIN, OTP, kode pemulihan, atau nomor kartu penuh.</li>
         </ol>
-        <p>Jika pesanan tidak dapat dipenuhi, PrimeHub akan menawarkan penggantian yang sesuai atau pengembalian dana berdasarkan kondisi pesanan dan hukum yang berlaku. Setelah refund disetujui, PrimeHub menargetkan memulai proses dalam 7 hari kerja. Waktu dana diterima dapat berbeda menurut penyedia pembayaran.</p>
-        <p>Jangan pernah mengirim kata sandi, PIN, OTP, kode pemulihan, atau nomor kartu penuh saat meminta bantuan.</p>
-        <p className="legal-owner-note"><strong>Catatan pengelola:</strong> pastikan kanal dukungan dan alur pengembalian dana sudah benar-benar aktif sebelum menerima pembayaran publik.</p>
+        <h2>Waktu penyelesaian</h2>
+        <p>PrimeHub menargetkan memberi tanggapan awal dalam 2 hari kerja setelah menerima informasi yang cukup. Jika refund disetujui, PrimeHub menargetkan memulai pengembalian dana dalam 7 hari kerja. Waktu sampai dana masuk dapat berbeda sesuai bank atau penyedia pembayaran. Jika informasi pengajuan belum lengkap, admin akan meminta bukti yang diperlukan.</p>
+        <h2>Hal yang perlu diketahui</h2>
+        <p>Pesanan berstatus menunggu verifikasi bukan bukti bahwa pembayaran telah diterima. Jangan melakukan pembayaran sebelum menerima instruksi yang dapat diverifikasi. Bila pelanggan memilih penggantian, PrimeHub akan menjelaskan produk dan durasi pengganti terlebih dahulu.</p>
+        <p>Ketentuan ini tidak membatasi hak konsumen yang tidak dapat dikesampingkan berdasarkan hukum yang berlaku.</p>
         <a className="button button-primary" href="/primehub/">Kembali ke PrimeHub</a>
       </article>
       <footer className="site-footer"><div className="container footer-bottom"><span>© 2026 PrimeHub</span><a href="/primehub/">Beranda</a><a href="/primehub/syarat-ketentuan/">Syarat Layanan</a><a href="/primehub/kebijakan-privasi/">Kebijakan Privasi</a></div></footer>
