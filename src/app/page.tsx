@@ -31,6 +31,7 @@ type Service = {
   productId?: string;
   price_idr?: number;
   stock?: number;
+  image_url?: string | null;
 };
 
 const services: Service[] = [
@@ -74,13 +75,13 @@ export default function HomePage() {
     async function loadCatalog() {
       try {
         const response = await fetch(
-          `${projectUrl}/rest/v1/products?select=id,name,description,category,price_idr,stock,is_active&is_active=eq.true&order=created_at.desc`,
+          `${projectUrl}/rest/v1/products?select=id,name,description,category,image_url,price_idr,stock,is_active&is_active=eq.true&order=created_at.desc`,
           { headers: { apikey: publicKey, Authorization: `Bearer ${publicKey}` } }
         );
         if (!response.ok) throw new Error("Katalog tidak dapat dimuat.");
         const rows = await response.json() as Array<{
           id: string; name: string; description: string | null; category: string | null;
-          price_idr: number | string; stock: number; is_active: boolean;
+          price_idr: number | string; stock: number; is_active: boolean; image_url: string | null;
         }>;
         if (!Array.isArray(rows)) throw new Error("Format katalog tidak valid.");
 
@@ -101,6 +102,7 @@ export default function HomePage() {
             description: product.description || "Layanan digital PrimeHub.",
             price_idr: price,
             stock: product.stock,
+            image_url: product.image_url,
             price: money(price),
             duration: product.stock > 0 ? `${product.stock} tersedia` : "Stok habis",
             icon: style.icon,
@@ -271,7 +273,7 @@ export default function HomePage() {
         </div>
         <div className="service-grid">
           {filteredServices.map((service, index) => <article className="service-card" key={service.id}>
-            <div className="service-card-top"><span className={"service-icon " + service.tone}>{service.icon}</span><span className="service-number">0{index + 1}</span></div>
+            <div className="service-card-top">{service.image_url ? <img src={service.image_url} alt={service.name} loading="lazy" style={{ width: "100%", height: 180, objectFit: "cover", borderRadius: 14 }} /> : <span className={"service-icon " + service.tone}>{service.icon}</span>}<span className="service-number">0{index + 1}</span></div>
             {service.featured && <span className="popular-label"><Sparkles size={12} /> PILIHAN POPULER</span>}
             <span className="service-category">{service.category}</span>
             <h3>{service.name}</h3><p>{service.description}</p>
