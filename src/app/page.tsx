@@ -376,7 +376,7 @@ export default function HomePage() {
           <article className="step-card"><span>01</span><h3>Pilih paket</h3><p>Baca durasi, harga contoh, dan metode aktivasi.</p></article>
           <article className="step-card"><span>02</span><h3>Isi formulir</h3><p>Masukkan informasi kontak yang diperlukan saja.</p></article>
           <article className="step-card"><span>03</span><h3>Konfirmasi</h3><p>Periksa ringkasan sebelum membuat permintaan atau pesanan.</p></article>
-          <article className="step-card"><span>04</span><h3>Pantau status</h3><p>Untuk pesanan nyata, tunggu verifikasi admin. Demo tidak melakukan pembayaran.</p></article>
+          <article className="step-card"><span>04</span><h3>Pantau dan tindak lanjuti</h3><p>Simpan kode pesanan, cek kontak yang kamu cantumkan, dan hubungi admin dengan kode tersebut jika belum ada kabar. Pembayaran otomatis perlu gateway resmi; aktivasi tetap diproses admin. Demo tidak melakukan pembayaran.</p></article>
         </div>
       </div></section>
 
@@ -394,7 +394,7 @@ export default function HomePage() {
             <p className="modal-note">Informasi pada mode demo adalah contoh, bukan jaminan ketersediaan layanan.</p><button className="button button-primary form-submit" type="button" onClick={() => setModalMode("order")}>Lanjut ke formulir <ArrowRight size={17} /></button>
           </div> : !submitted ? <>
             <span className={"service-icon modal-service-icon " + selectedService.tone}>{selectedService.icon}</span><span className="eyebrow">FORMULIR PERMINTAAN</span><h2 id="order-title">Tertarik dengan {selectedService.name}?</h2>
-            <p>{selectedService.productId ? "Pesanan dicatat dengan status menunggu verifikasi. Admin perlu mengonfirmasi ketersediaan dan memberikan instruksi pembayaran/aktivasi. Jangan kirim password, OTP, PIN, atau kode pemulihan." : "Isi formulir untuk melihat ringkasan demo. Data belum dikirim ke backend."}</p>
+            <p>{selectedService.productId ? "Setelah pesanan dibuat, simpan kode pesanan dan pantau kontak yang kamu cantumkan. Pembayaran otomatis akan tersedia setelah metode pembayaran resmi diaktifkan; untuk saat ini status masih perlu diverifikasi admin. Jika belum ada kabar, hubungi admin dengan kode pesanan. Aktivasi tetap diproses admin setelah pembayaran terkonfirmasi. Jangan kirim password, OTP, PIN, atau kode pemulihan." : "Isi formulir untuk melihat ringkasan demo. Data belum dikirim ke backend."}</p>
             <form onSubmit={submitInquiry} className="inquiry-form">
               <label>Nama<input required maxLength={90} value={customerName} onChange={(event) => setCustomerName(event.target.value)} placeholder="Nama kamu" /></label>
               <label>Email atau WhatsApp<input required maxLength={150} value={customerContact} onChange={(event) => setCustomerContact(event.target.value)} placeholder="Kontak yang bisa dihubungi" /></label>
@@ -404,7 +404,7 @@ export default function HomePage() {
             </form>
           </> : <div className="request-summary">
             <span className="success-mark"><CheckCircle2 size={28} /></span><span className="eyebrow">RINGKASAN</span><h2 id="order-title">{createdOrder ? "Pesanan tercatat" : "Ringkasan siap disalin"}</h2>
-            <p>{createdOrder ? "Status pesanan menunggu verifikasi admin. Simpan kode ini dan jangan menganggap pesanan lunas sebelum pembayaran diverifikasi." : "Ini ringkasan demo lokal. Tidak ada pembayaran atau aktivasi nyata."}</p>
+            <p>{createdOrder ? "Simpan kode pesanan ini dan pantau email/WhatsApp yang kamu cantumkan. Status pembayaran saat ini masih menunggu verifikasi admin karena gateway otomatis belum diaktifkan. Jika belum ada pembaruan, hubungi admin dan sertakan kode pesanan. Setelah pembayaran terkonfirmasi, admin tetap memproses aktivasi secara manual." : "Ini ringkasan demo lokal. Tidak ada pembayaran atau aktivasi nyata."}</p>
             {createdOrder && <p className="order-code"><strong>Kode pesanan: {createdOrder.order_code}</strong><br />Total: {money(createdOrder.total_idr)}<br />Pembayaran: Menunggu verifikasi admin</p>}
             <textarea readOnly value={requestSummary} rows={7} aria-label="Ringkasan permintaan" />
             <button className="button button-primary form-submit" type="button" onClick={() => { void navigator.clipboard?.writeText(requestSummary); }}>Salin ringkasan <CheckCircle2 size={17} /></button>
