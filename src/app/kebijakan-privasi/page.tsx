@@ -13,10 +13,10 @@ export default function PrivacyPage() {
       <h2>Penyedia layanan</h2>
       <p>PrimeHub menggunakan Supabase untuk backend dan penyimpanan pesanan serta layanan hosting. Jika notifikasi admin diaktifkan, informasi pesanan yang diperlukan dapat diteruskan ke layanan tersebut.</p>
       <h2>Penyimpanan dan permintaan</h2>
-      <p>Informasi disimpan selama diperlukan untuk menjalankan pesanan, menangani keluhan, menjaga keamanan, dan memenuhi kewajiban hukum. Permintaan akses atau koreksi dapat diajukan melalui kanal dukungan resmi yang diberikan pada konfirmasi pesanan.</p>
+      <p>Informasi disimpan selama diperlukan untuk menjalankan pesanan, menangani keluhan, menjaga keamanan, dan memenuhi kewajiban hukum. Untuk meminta akses atau koreksi informasi terkait pesanan, gunakan kanal komunikasi yang digunakan untuk pesanan tersebut dan sertakan kode pesanan. Permintaan akan diperiksa secara wajar dengan tetap memperhatikan kewajiban penyimpanan yang berlaku.</p>
       <p>Jangan mengirim kata sandi, PIN, OTP, atau kode pemulihan kepada PrimeHub. Kebijakan ini dapat diperbarui apabila layanan berubah.</p>
-      <p className="legal-owner-note">Sebelum transaksi publik dibuka, lengkapi identitas pengelola dan kontak dukungan resmi serta pastikan halaman ini sesuai praktik yang benar-benar digunakan.</p>
+      
     </article>
-    <footer className="site-footer"><div className="container footer-bottom"><span>© 2026 PrimeHub</span><a href="/primehub/">Beranda</a><a href="/primehub/pengembalian-dana/">Pengembalian Dana</a></div></footer>
+    <footer className="site-footer"><div className="container footer-bottom"><span>© 2026 PrimeHub</span><a href="/primehub/">Beranda</a><a href="/primehub/syarat-ketentuan/">Syarat Layanan</a><a href="/primehub/pengembalian-dana/">Pengembalian Dana</a></div></footer>
   </main>;
 }
