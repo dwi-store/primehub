@@ -385,7 +385,7 @@ export default function HomePage() {
       </section>
 
       <section className="features-section" id="keunggulan"><div className="container">
-        <div className="section-heading"><div><span className="eyebrow">KENAPA PRIMEHUB?</span><h2>Lebih jelas dari awal<span>.</span></h2></div></div>
+        <div className="section-heading"><div><span className="eyebrow">KENAPA UPPRIME?</span><h2>Lebih jelas dari awal<span>.</span></h2></div></div>
         <div className="features-grid">
           <article className="feature-card"><ShieldCheck /><h3>Metode sesuai paket</h3><p>Metode aktivasi diatur per paket, bukan disamakan untuk semua aplikasi.</p></article>
           <article className="feature-card"><CheckCircle2 /><h3>Privasi pelanggan</h3><p>Jangan pernah membagikan password, OTP, atau kode pemulihan akun.</p></article>
