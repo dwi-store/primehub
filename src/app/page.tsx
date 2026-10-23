@@ -137,12 +137,15 @@ export default function HomePage() {
     async function loadCatalog() {
       if (cancelled || refreshInProgress) return;
       refreshInProgress = true;
+      const controller = new AbortController();
+      const timeoutId = window.setTimeout(() => controller.abort(), 12000);
       try {
         const { data, error } = await client!
           .from("products")
           .select("id,name,description,category,image_url,price_idr,stock,is_active,created_at")
           .eq("is_active", true)
-          .order("created_at", { ascending: false });
+          .order("created_at", { ascending: false })
+          .abortSignal(controller.signal);
         if (error) throw error;
         const rows = data ?? [];
         const mapped: Service[] = rows.map((product, index) => {
@@ -175,6 +178,7 @@ export default function HomePage() {
           setCatalogStatus("error");
         }
       } finally {
+        window.clearTimeout(timeoutId);
         refreshInProgress = false;
       }
     }
