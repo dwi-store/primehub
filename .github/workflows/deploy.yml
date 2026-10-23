@@ -36,6 +36,17 @@ jobs:
           NEXT_PUBLIC_SUPABASE_URL: ${{ vars.NEXT_PUBLIC_SUPABASE_URL || 'https://cfzleqzsynzkjukmtqvf.supabase.co' }}
           NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: ${{ vars.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY || 'sb_publishable_Gq6UGYMCKWRCAX-2r6neIw_caZLJrsY' }}
           NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ vars.NEXT_PUBLIC_SUPABASE_ANON_KEY || secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+      - name: Verify static admin page and prepare GitHub Pages
+        run: |
+          if [ ! -f ./out/admin/index.html ]; then
+            echo "::error::Build did not generate out/admin/index.html; refusing to deploy a site without the admin page."
+            find ./out -maxdepth 3 -type f | sort | head -200
+            exit 1
+          fi
+          # Prevent GitHub Pages/Jekyll from ignoring Next.js assets under _next.
+          touch ./out/.nojekyll
+          echo "Admin route exists: out/admin/index.html"
+          test -f ./out/index.html
       - name: Configure GitHub Pages
         uses: actions/configure-pages@v5
       - name: Upload site artifact
@@ -46,7 +57,6 @@ jobs:
   deploy:
     environment:
       name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
     needs: build
     steps:
