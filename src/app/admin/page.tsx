@@ -391,7 +391,7 @@ export default function AdminPage() {
   return <main style={{ minHeight: "100vh", background: "#f6f7fb", color: "#10162a", padding: "28px 16px 60px" }}>
     <div style={{ maxWidth: 1120, margin: "0 auto" }}>
       <header style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 16, flexWrap: "wrap", marginBottom: 28 }}>
-        <div><p style={{ margin: 0, color: "#5c5de8", fontWeight: 800, letterSpacing: 2, fontSize: 12 }}>PRIMEHUB / ADMIN</p><h1 style={{ margin: "8px 0", fontSize: 32 }}>Panel pengelolaan</h1><p style={{ margin: 0, color: "#687087" }}>Katalog, stok, dan pesanan dalam satu tempat.</p></div>
+        <div><p style={{ margin: 0, color: "#5c5de8", fontWeight: 800, letterSpacing: 2, fontSize: 12 }}>UPPRIME / ADMIN</p><h1 style={{ margin: "8px 0", fontSize: 32 }}>Panel pengelolaan</h1><p style={{ margin: 0, color: "#687087" }}>Katalog, stok, dan pesanan dalam satu tempat.</p></div>
         <Link href="/" style={{ color: "#5c5de8", fontWeight: 700 }}>← Kembali ke toko</Link>
       </header>
 
